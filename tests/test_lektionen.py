@@ -32,6 +32,25 @@ class LehrplanTest(unittest.TestCase):
                     self.assertTrue(l[feld], feld)
 
 
+class ExportTest(unittest.TestCase):
+    def test_browser_dateien_aktuell(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "werkzeuge"))
+        import export
+        docs = Path(__file__).resolve().parents[1] / "docs"
+        meldung = "docs/ ist veraltet – bitte  python werkzeuge/export.py  ausführen."
+        self.assertEqual((docs / "lektionen.json").read_text("utf-8"), export.lektionen_json(), meldung)
+        self.assertEqual((docs / "py" / "runner.py").read_text("utf-8"), export.runner_quelle(), meldung)
+
+    def test_runner_direkt(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "trainer"))
+        import runner
+        l = LEKTIONEN[5]  # input()-Lektion
+        self.assertTrue(runner.pruefe_code(l["loesung"], l["datei"], l["tests"], l["stdin"])["ok"])
+        r = runner.ausfuehren_code("print(1/0)", "x.py")
+        self.assertEqual(r["fehler"]["typ"], "ZeroDivisionError")
+        self.assertTrue(r["fehler"]["hinweis"])
+
+
 class RunnerTest(unittest.TestCase):
     def test_fehler_mit_zeile(self):
         r = ausfuehren("x = 1\nprint(y)\n", "test.py")

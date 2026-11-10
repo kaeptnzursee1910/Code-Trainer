@@ -20,11 +20,11 @@ from pathlib import Path
 BASIS = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASIS))
 
-from trainer import agent, ausfuehrung  # noqa: E402
+from trainer import ausfuehrung  # noqa: E402
 from trainer.lektionen import LEKTIONEN, lektion, oeffentlich  # noqa: E402
 from trainer.llm import LLM, ModellFehler  # noqa: E402
 
-WEB = BASIS / "web"
+WEB = BASIS / "docs"   # dieselbe Oberfläche wie die Browser-Version (GitHub Pages)
 DATEN = BASIS / "daten"
 CONFIG_DATEI = DATEN / "config.json"
 FORTSCHRITT_DATEI = DATEN / "fortschritt.json"
@@ -110,7 +110,7 @@ class Handler(BaseHTTPRequestHandler):
             with _sperre:
                 return self._json(lade_fortschritt())
         if pfad == "/api/status":
-            return self._json(self.server.llm.status())
+            return self._json({**self.server.llm.status(), "modus": "server"})
         return self._datei(pfad)
 
     def _datei(self, pfad):
@@ -162,6 +162,8 @@ class Handler(BaseHTTPRequestHandler):
                     f = lade_fortschritt()
                     if "aktuell" in daten:
                         f["aktuell"] = int(daten["aktuell"])
+                    if daten.get("erledigt") and int(daten["erledigt"]) not in f["erledigt"]:
+                        f["erledigt"] = sorted(f["erledigt"] + [int(daten["erledigt"])])
                     for k, v in (daten.get("code") or {}).items():
                         f["code"][str(k)] = v
                     if daten.get("zuruecksetzen"):
@@ -175,7 +177,7 @@ class Handler(BaseHTTPRequestHandler):
                 konfig = lade_json(CONFIG_DATEI, {})
                 konfig["modell"] = llm.modell
                 speichere_json(CONFIG_DATEI, konfig)
-                return self._json(llm.status())
+                return self._json({**llm.status(), "modus": "server"})
             if pfad == "/api/chat":
                 return self._chat(daten)
         except KeyError:
@@ -183,17 +185,14 @@ class Handler(BaseHTTPRequestHandler):
         return self._json({"fehler": "Nicht gefunden"}, 404)
 
     def _chat(self, daten):
-        l = lektion(int(daten.get("lektion", 1)))
-        nachrichten = agent.baue_nachrichten(
-            daten.get("modus", "frage"),
-            l,
-            daten.get("verlauf") or [],
-            code=daten.get("code", ""),
-            ausgabe=daten.get("ausgabe", ""),
-            text=daten.get("text", ""),
-            pruefung=daten.get("pruefung"),
-            tipp_nr=int(daten.get("tipp_nr") or 1),
-        )
+        """Leitet fertige Chat-Nachrichten (vom Browser gebaut) an das Modell weiter."""
+        nachrichten = [
+            {"role": n["role"], "content": str(n.get("content", ""))[:20000]}
+            for n in daten.get("nachrichten") or []
+            if n.get("role") in ("system", "user", "assistant")
+        ]
+        if not nachrichten:
+            return self._json({"fehler": "Keine Nachrichten"}, 400)
         self.send_response(200)
         self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
         self.send_header("Cache-Control", "no-store")

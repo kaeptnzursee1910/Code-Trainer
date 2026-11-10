@@ -1,6 +1,6 @@
 # ◆ Code-Trainer
 
-Ein KI-Agent, der dir **Python** beibringt – im Browser, im Terminal-Look von Claude Code, mit einem **lokalen** Sprachmodell. Keine Cloud, kein Konto, keine Zusatzpakete.
+Ein KI-Agent, der dir **Python** beibringt – im Browser, im Terminal-Look von Claude Code, mit einem **lokalen** Sprachmodell. Keine Cloud, kein Konto. Läuft entweder **komplett im Browser** (auch auf dem iPad) oder mit einem Modell auf deinem Computer.
 
 ```
 ┌──────────────────────────┬──────────────────────────────┐
@@ -13,7 +13,35 @@ Ein KI-Agent, der dir **Python** beibringt – im Browser, im Terminal-Look von 
 └──────────────────────────┴──────────────────────────────┘
 ```
 
-## Schnellstart
+## Zwei Varianten
+
+| | **Browser-Version** (z. B. iPad) | **Server-Version** (Computer) |
+|---|---|---|
+| Start | Webseite öffnen – nichts installieren | `python server.py` |
+| Python | läuft im Browser (Pyodide) | echtes Python auf dem Computer |
+| KI-Tutor | kleines Modell auf der Grafikeinheit des Geräts (WebLLM, 1–3 Mrd. Parameter) | beliebiges Modell über Ollama, LM Studio … (z. B. 7–14 Mrd.) |
+| Fortschritt | im Browser gespeichert | im Ordner `daten/` |
+| Offline | nach dem ersten Laden ja | ja |
+
+Beide nutzen dieselbe Oberfläche aus dem Ordner [`docs/`](docs) und denselben Lehrplan.
+
+## Browser-Version (iPad, Tablet, jeder aktuelle Browser)
+
+**→ https://kaeptnzursee1910.github.io/Code-Trainer/**
+
+1. Seite in Safari öffnen. Für ein App-Gefühl: Teilen → **Zum Home-Bildschirm**.
+2. Lektionen, Ausführen, Prüfen, Tipps und Lösungen funktionieren sofort. Python wird beim ersten Start einmalig geladen (~10 MB).
+3. Für den KI-Tutor im Agent-Fenster auf **⬇ Modell laden** tippen. Das Modell wird einmalig heruntergeladen (Qwen2.5-1.5B: ca. 1,6 GB, am besten im WLAN) und danach aus dem Speicher gestartet. Alles bleibt auf dem Gerät.
+
+**Voraussetzungen für den KI-Tutor:** ein Browser mit **WebGPU** – auf dem iPad iPadOS 26 oder neuer mit Safari, am Computer aktuelles Chrome/Edge (bzw. Safari 26). Auf älteren Geräten läuft der Kurs ohne Chat. Auf iPads mit wenig Arbeitsspeicher (unter 6 GB) kann das Laden abbrechen – dann im Menü oben rechts ein kleineres Modell wählen (z. B. Llama-3.2-1B).
+
+Kleine Modelle erklären einfacher und machen öfter Fehler als die großen Modelle der Server-Version; die automatischen Tests entscheiden aber immer zuverlässig, ob eine Aufgabe gelöst ist.
+
+Unter dem Editor gibt es auf Touch-Geräten eine **Tastenleiste** für Einrücken, Klammern, Anführungszeichen usw. Typografische Anführungszeichen („…“), die iPadOS automatisch einsetzt, werden im Editor sofort in normale `"` umgewandelt.
+
+**Selbst veröffentlichen:** In den Repository-Einstellungen unter *Pages* als Quelle den Branch `main` und den Ordner `/docs` wählen. Lokal testen: `python -m http.server -d docs` und `http://localhost:8000/?modus=browser` öffnen.
+
+## Server-Version (Computer mit lokalem Modell)
 
 Voraussetzung: **Python 3.10 oder neuer**.
 
@@ -30,6 +58,8 @@ python server.py
 Der Browser öffnet sich automatisch unter <http://127.0.0.1:8000>.
 
 > Ohne laufendes Modell funktioniert der Kurs trotzdem: Lektionen, Ausführen, automatische Prüfung, gestufte Tipps und Musterlösungen. Nur der freie Chat und die individuellen Erklärungen brauchen das Modell.
+
+**iPad als Bildschirm:** `python server.py --host 0.0.0.0` starten und auf dem iPad `http://<IP-des-Computers>:8000` öffnen (nur in vertrauenswürdigen Netzen – siehe Sicherheit).
 
 ### Andere lokale Modell-Server
 
@@ -97,27 +127,38 @@ Alles andere, was du eintippst, beantwortet der Agent – er kennt deine aktuell
 
 ### Eigene Lektionen hinzufügen
 
-Alle Lektionen stehen in [`trainer/lektionen.py`](trainer/lektionen.py). Jede Lektion hat Erklärung, Aufgabe, Startcode, Tests (Python-`assert`s), Tipps und Musterlösung. In den Tests stehen `AUSGABE`, `QUELLTEXT`, `starte(eingabe)` und `mit_eingabe(eingabe, funktion, *args)` sowie alle Namen aus dem Lernenden-Code zur Verfügung. Danach prüfen:
+Alle Lektionen stehen in [`trainer/lektionen.py`](trainer/lektionen.py). Jede Lektion hat Erklärung, Aufgabe, Startcode, Tests (Python-`assert`s), Tipps und Musterlösung. In den Tests stehen `AUSGABE`, `QUELLTEXT`, `starte(eingabe)` und `mit_eingabe(eingabe, funktion, *args)` sowie alle Namen aus dem Lernenden-Code zur Verfügung. Danach die Browser-Dateien aktualisieren und prüfen:
 
 ```bash
+python werkzeuge/export.py
 python -m unittest discover tests
 ```
 
 ## Aufbau
 
 ```
-server.py               HTTP-Server (nur Standardbibliothek) und Einstiegspunkt
+server.py               Server-Version: HTTP-Server (nur Standardbibliothek)
 trainer/
-  lektionen.py          Lehrplan mit Tests
-  agent.py              System-Prompt und Kontext für den Tutor
-  llm.py                Anbindung an Ollama / OpenAI-kompatible Server (Streaming)
-  ausfuehrung.py        startet den Code mit Zeitlimit in eigenem Prozess
-  runner.py             führt Code + Tests aus, bereitet Fehlermeldungen auf
-web/                    Oberfläche (HTML/CSS/JS ohne Build-Schritt)
-tests/                  prüft, dass alle Musterlösungen bestehen
-daten/                  Fortschritt und Einstellungen (wird angelegt, nicht im Git)
+  lektionen.py          Lehrplan mit Tests (Quelle)
+  runner.py             führt Code + Tests aus – im Prozess (Server) und in Pyodide (Browser)
+  ausfuehrung.py        Server: startet runner.py mit Zeitlimit als eigenen Prozess
+  llm.py                Server: Anbindung an Ollama / OpenAI-kompatible Server
+docs/                   Oberfläche – zugleich die Browser-Version (GitHub Pages)
+  app.js                Editor, Agent-Fenster, Befehle
+  agent.js              System-Prompt und Kontext für den Tutor
+  backend-server.js     spricht mit server.py
+  backend-browser.js    Pyodide + WebLLM + localStorage
+  python-worker.js      Python im Web Worker (Zeitlimit durch Neustart des Workers)
+  llm-worker.js         WebLLM im Web Worker
+  lektionen.json, py/   von werkzeuge/export.py erzeugt
+  sw.js, manifest       Offline-Nutzung und „Zum Home-Bildschirm“
+werkzeuge/export.py     überträgt Lehrplan und Runner nach docs/
+tests/                  prüft Musterlösungen, Runner und Export
+daten/                  Fortschritt der Server-Version (nicht im Git)
 ```
 
 ## Sicherheit
 
-Der Code der Lernenden läuft **ungesichert auf deinem Rechner** (eigener Prozess, 10 s Zeitlimit, Ausgabelimit) – genau wie bei einem normalen Python-Aufruf. Der Server lauscht deshalb nur auf `127.0.0.1` und weist Anfragen fremder Webseiten ab. Starte ihn mit `--host 0.0.0.0` nur in einem Netz, dem du vertraust.
+In der **Browser-Version** läuft der Code abgeschottet in der Sandbox des Browsers.
+
+In der **Server-Version** gilt: Der Code der Lernenden läuft **ungesichert auf deinem Rechner** (eigener Prozess, 10 s Zeitlimit, Ausgabelimit) – genau wie bei einem normalen Python-Aufruf. Der Server lauscht deshalb nur auf `127.0.0.1` und weist Anfragen fremder Webseiten ab. Starte ihn mit `--host 0.0.0.0` nur in einem Netz, dem du vertraust.

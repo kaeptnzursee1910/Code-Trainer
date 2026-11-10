@@ -1,7 +1,9 @@
 /* Code-Trainer – Oberfläche
  * links: Editor · rechts oben: Agent · rechts unten: Ausgabe
  */
-"use strict";
+import { baueNachrichten } from "./agent.js";
+import { erstelleServerBackend } from "./backend-server.js";
+import { erstelleBrowserBackend } from "./backend-browser.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -170,12 +172,47 @@ async function speichern() {
   clearTimeout(speicherTimer);
   if (!S.nr) return;
   try {
-    await api("/api/fortschritt", { code: { [S.nr]: ta.value } });
+    await B.fortschrittSpeichern({ code: { [S.nr]: ta.value } });
     $("#ungespeichert").hidden = true;
   } catch { /* nächster Versuch beim nächsten Tastendruck */ }
 }
 
-ta.addEventListener("input", () => { if (fehlerZeile) fehlerZeile = null; editorAktualisieren(); codeGeaendert(); });
+// iPad/Mac ersetzen " und ' gern durch typografische Anführungszeichen – Python versteht die nicht.
+const SMART = /[“”„‟″‘’‚‛′]/g;
+const SMART_ERSATZ = { "“": '"', "”": '"', "„": '"', "‟": '"', "″": '"', "‘": "'", "’": "'", "‚": "'", "‛": "'", "′": "'" };
+ta.addEventListener("input", () => {
+  if (SMART.test(ta.value)) {
+    const { selectionStart: a, selectionEnd: b } = ta;
+    ta.value = ta.value.replace(SMART, (c) => SMART_ERSATZ[c]);
+    ta.setSelectionRange(a, b);
+  }
+  if (fehlerZeile) fehlerZeile = null;
+  editorAktualisieren();
+  codeGeaendert();
+});
+
+// Tastenleiste für Touch-Geräte
+$("#tastenleiste").addEventListener("pointerdown", (e) => e.preventDefault()); // Fokus im Editor halten
+$("#tastenleiste").addEventListener("click", (e) => {
+  const k = e.target.closest("[data-taste]");
+  if (!k) return;
+  ta.focus();
+  const t = k.dataset.taste;
+  if (t === "tab" || t === "untab") {
+    ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: t === "untab", bubbles: true, cancelable: true }));
+    return;
+  }
+  const paar = { "()": 1, "[]": 1, "{}": 1, '""': 1, "print()": 1 }[t];
+  const markiert = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+  if (paar) {
+    const auf = t.slice(0, -1), zu = t.slice(-1);
+    einfuegen(auf + markiert + zu);
+    if (!markiert) ta.setSelectionRange(ta.selectionStart - 1, ta.selectionStart - 1);
+  } else {
+    einfuegen(t === "==" ? " == " : t === "=" ? " = " : t);
+  }
+  gutterAktualisieren();
+});
 ta.addEventListener("scroll", syncScroll);
 ta.addEventListener("click", gutterAktualisieren);
 ta.addEventListener("keyup", (e) => { if (e.key.startsWith("Arrow") || e.key === "Home" || e.key === "End") gutterAktualisieren(); });
@@ -288,36 +325,77 @@ log.addEventListener("click", async (e) => {
   }
 });
 
-/* ================================================================ Server */
-async function api(pfad, daten) {
-  const res = await fetch(pfad, daten === undefined ? {} : {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten),
-  });
-  if (!res.ok) throw new Error(`Server antwortet mit ${res.status}`);
-  return res.json();
+/* ================================================================ Backend & Modell */
+// Server-Version (python server.py) oder reine Browser-Version (z. B. GitHub Pages / iPad)?
+async function backendWaehlen() {
+  const erzwungen = new URLSearchParams(location.search).get("modus");
+  if (erzwungen !== "browser" && !location.hostname.endsWith(".github.io")) {
+    try {
+      const res = await fetch("api/status", { cache: "no-store" });
+      if (res.ok && (await res.json()).modus === "server") return erstelleServerBackend();
+    } catch { /* kein Server → Browser-Version */ }
+  }
+  return erstelleBrowserBackend();
 }
+
+let B = null; // aktives Backend
 
 async function statusLaden() {
-  try { S.status = await api("/api/status"); }
-  catch { S.status = { online: false, modelle: [], fehler: "Code-Trainer-Server nicht erreichbar." }; }
+  S.status = await B.status();
   const st = S.status;
-  $("#modellPunkt").className = "dot " + (st.online ? "online" : "offline");
+  $("#modellPunkt").className = "dot " + (st.laedt ? "laedt" : st.online ? "online" : "offline");
   const wahl = $("#modellWahl");
-  wahl.innerHTML = st.modelle.length
-    ? st.modelle.map((m) => `<option ${m === st.modell ? "selected" : ""}>${esc(m)}</option>`).join("")
-    : `<option>${st.online ? "kein Modell" : "offline"}</option>`;
-  wahl.disabled = !st.modelle.length;
-  $("#agentStatus").textContent = st.online ? `· ${st.modell}` : "· offline – Kurs ohne Chat";
+  if (B.name === "browser") {
+    const opt = st.modelle.map((m) => `<option value="${esc(m.id)}" ${m.id === st.modell ? "selected" : ""}>${esc(m.label)}</option>`).join("");
+    wahl.innerHTML = (st.modell ? "" : `<option value="" selected>${st.webgpu === false ? "KI nicht verfügbar" : st.modelle.length ? "KI-Modell wählen …" : "Modelle werden gesucht …"}</option>`) + opt;
+    wahl.disabled = !st.modelle.length || st.laedt;
+  } else {
+    wahl.innerHTML = st.modelle.length
+      ? st.modelle.map((m) => `<option value="${esc(m.id)}" ${m.id === st.modell ? "selected" : ""}>${esc(m.label)}</option>`).join("")
+      : `<option>${st.online ? "kein Modell" : "offline"}</option>`;
+    wahl.disabled = !st.modelle.length;
+  }
+  $("#agentStatus").textContent = st.laedt ? "· Modell wird geladen …" : st.online ? `· ${kurzname(st.modell)}` : "· ohne KI – Kurs funktioniert trotzdem";
   clearTimeout(statusLaden.t);
-  if (!st.online) statusLaden.t = setTimeout(statusLaden, 10000);
+  if (B.name === "server" && !st.online) statusLaden.t = setTimeout(statusLaden, 10000);
   return st;
 }
+const kurzname = (id) => String(id || "").replace(/-q4f(16|32)_1-MLC$/, "");
 
-$("#modellWahl").addEventListener("change", async (e) => {
-  await api("/api/einstellungen", { modell: e.target.value });
-  await statusLaden();
-  logSystem(`Modell gewechselt zu <b>${esc(S.status.modell)}</b>.`);
-});
+async function modellLaden(id) {
+  if (!id) return;
+  if (B.name === "server") {
+    await B.modellWaehlen(id);
+    await statusLaden();
+    logSystem(`Modell gewechselt zu <b>${esc(S.status.modell)}</b>.`);
+    return;
+  }
+  const m = S.status.modelle.find((x) => x.id === id);
+  const el = logSystem(`<b>Lade KI-Modell ${esc(kurzname(id))}</b>` +
+    `<div class="dim" data-text>Startet … ${m?.mb ? `(beim ersten Mal ca. ${(m.mb / 1024).toFixed(1).replace(".", ",")} GB Download, danach aus dem Speicher)` : ""}</div>` +
+    `<div class="ladebalken"><div></div></div>`, "⬇");
+  const text = $("[data-text]", el), balken = $(".ladebalken div", el);
+  B.beiLadefortschritt = (r) => {
+    balken.style.width = `${Math.round((r.progress || 0) * 100)}%`;
+    text.textContent = (r.text || "").replace(/\[\d+\/\d+\]:?\s*/, "").slice(0, 160);
+  };
+  const statusTimer = setInterval(statusLaden, 1500);
+  statusLaden();
+  try {
+    await B.modellWaehlen(id);
+    balken.style.width = "100%";
+    text.innerHTML = `<span class="ok">Bereit.</span> Das Modell läuft jetzt komplett auf deinem Gerät – frag einfach los.`;
+    balken.parentElement.remove();
+  } catch (err) {
+    text.innerHTML = `<span class="err">${esc(err.message)}</span>`;
+  } finally {
+    clearInterval(statusTimer);
+    B.beiLadefortschritt = null;
+    await statusLaden();
+  }
+}
+
+$("#modellWahl").addEventListener("change", (e) => modellLaden(e.target.value));
 
 /* ================================================================ Agent (Sprachmodell) */
 const NUTZERTEXT = {
@@ -334,7 +412,7 @@ function abbrechen() { if (S.abbruch) S.abbruch.abort(); }
 $("#knopfStopp").addEventListener("click", abbrechen);
 
 async function agentFragen(modus, extras = {}) {
-  if (!S.status.online) { await statusLaden(); }
+  if (!S.status.online && B.name === "server") await statusLaden();
   if (!S.status.online) return offlineAntwort(modus, extras);
   abbrechen();
   const verlauf = (S.verlauf[S.nr] ||= []);
@@ -349,31 +427,15 @@ async function agentFragen(modus, extras = {}) {
   let text = "", geplant = false;
   const zeichnen = () => { geplant = false; el.hidden = !text; body.innerHTML = md(text); nachUnten(); };
 
+  const nachrichten = baueNachrichten(modus, {
+    lektion: aktuelleLektion(), alle: S.lektionen, verlauf, code: ta.value, ausgabe: S.letzteAusgabe,
+    text: extras.text || "", pruefung: extras.pruefung || null, tippNr: extras.tipp_nr || 1, kompakt: B.kompakt,
+  });
+
   try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: ctrl.signal,
-      body: JSON.stringify({ modus, lektion: S.nr, verlauf, code: ta.value, ausgabe: S.letzteAusgabe, ...extras }),
-    });
-    if (!res.ok) throw new Error(`Server antwortet mit ${res.status}`);
-    const leser = res.body.getReader();
-    const dec = new TextDecoder();
-    let puffer = "";
-    lesen: for (;;) {
-      const { value, done } = await leser.read();
-      if (done) break;
-      puffer += dec.decode(value, { stream: true });
-      let i;
-      while ((i = puffer.indexOf("\n")) >= 0) {
-        const zeile = puffer.slice(0, i);
-        puffer = puffer.slice(i + 1);
-        if (!zeile.trim()) continue;
-        const ev = JSON.parse(zeile);
-        if (ev.t) { text += ev.t; if (!geplant) { geplant = true; requestAnimationFrame(zeichnen); } }
-        else if (ev.fehler) throw new Error(ev.fehler);
-        else if (ev.fertig) break lesen;
-      }
+    for await (const stueck of B.chat(nachrichten, ctrl.signal)) {
+      text += stueck;
+      if (!geplant) { geplant = true; requestAnimationFrame(zeichnen); }
     }
     zeichnen();
     if (!text.trim()) { el.hidden = false; body.innerHTML = '<span class="dim">(Das Modell hat nichts geantwortet.)</span>'; }
@@ -381,7 +443,7 @@ async function agentFragen(modus, extras = {}) {
                       { role: "assistant", content: text });
   } catch (err) {
     el.hidden = false;
-    if (err.name === "AbortError") {
+    if (err.name === "AbortError" || ctrl.signal.aborted) {
       body.innerHTML = (text ? md(text) : "") + '<p class="dim">– abgebrochen –</p>';
     } else {
       body.innerHTML = (text ? md(text) : "") + `<p class="err">Fehler: ${esc(err.message)}</p>`;
@@ -414,11 +476,34 @@ function offlineAntwort(modus, extras) {
     return;
   }
   if (modus === "loesung") return;
-  logSystem(
-    `<b>Kein lokales Modell erreichbar.</b> <span class="dim">${esc(S.status.fehler || "")}</span>` +
-    md("\nSo startest du eines (einmalig):\n```bash\n# Ollama installieren: https://ollama.com\nollama pull qwen2.5-coder:7b\nollama serve\n```\n" +
-       "Ohne Modell funktionieren weiterhin: **/prüfen**, **/tipp**, **/lösung** und alle Lektionen."),
-    "⚠");
+  kiHinweis();
+}
+
+// Erklärt, wie man die KI einschaltet – je nach Version
+function kiHinweis() {
+  const st = S.status;
+  const ohne = "Ohne KI funktionieren weiterhin: **/prüfen**, **/tipp**, **/lösung** und alle Lektionen.";
+  if (B.name === "server") {
+    logSystem(`<b>Kein lokales Modell erreichbar.</b> <span class="dim">${esc(st.fehler || "")}</span>` + md("\n" + B.offlineHilfe + "\n" + ohne), "⚠");
+    return;
+  }
+  if (st.webgpu === false) {
+    logSystem(`<b>KI-Tutor auf diesem Gerät nicht verfügbar.</b> <span class="dim">${esc(st.fehler)}</span>` + md("\n" + ohne), "⚠");
+    return;
+  }
+  if (st.laedt) { logSystem("Das KI-Modell wird gerade geladen – einen Moment noch.", "⬇"); return; }
+  const e = st.empfohlen;
+  const el = logSystem(
+    "<b>KI-Tutor einschalten?</b>" +
+    md("\nDas Sprachmodell läuft **komplett auf deinem Gerät** – nichts verlässt den Browser. Beim ersten Mal wird es einmalig heruntergeladen" +
+       (e?.mb ? ` (ca. ${(e.mb / 1024).toFixed(1).replace(".", ",")} GB, am besten im WLAN)` : "") + ", danach startet es aus dem Speicher.\n\n" + ohne) +
+    (e ? `<button class="inline-btn" data-laden="${esc(e.id)}">⬇ ${esc(kurzname(e.id))} laden</button>` : "") +
+    `<button class="inline-btn zweit" data-modellwahl>Anderes Modell …</button>`, "◆");
+  el.addEventListener("click", (ev) => {
+    const k = ev.target.closest("[data-laden]");
+    if (k) { el.querySelectorAll("button").forEach((b) => (b.disabled = true)); modellLaden(k.dataset.laden); }
+    if (ev.target.closest("[data-modellwahl]")) { $("#modellWahl").focus(); $("#modellWahl").showPicker?.(); }
+  });
 }
 
 /* ================================================================ Lektionen */
@@ -467,7 +552,7 @@ async function oeffneLektion(nr, { zeigen = true } = {}) {
   ausgabe.innerHTML = `<span class="dim">Hier erscheint die Ausgabe von ${esc(l.datei)}. ▶ Ausführen mit Strg+Enter.</span>`;
   $("#laufInfo").textContent = "";
   fortschrittAnzeigen();
-  api("/api/fortschritt", { aktuell: nr }).catch(() => {});
+  B.fortschrittSpeichern({ aktuell: nr }).catch(() => {});
   if (zeigen) zeigeLektion(l);
   ta.focus();
 }
@@ -492,7 +577,7 @@ $("#lektionMenue").addEventListener("click", async (e) => {
   e.stopPropagation();
   if (e.target.closest("[data-reset]")) {
     if (!confirm("Wirklich den gesamten Fortschritt und deinen Code löschen?")) return;
-    S.fortschritt = await api("/api/fortschritt", { zuruecksetzen: true });
+    S.fortschritt = await B.fortschrittZuruecksetzen();
     S.verlauf = {};
     lektionMenue(false);
     log.innerHTML = "";
@@ -531,10 +616,10 @@ async function ausfuehren() {
   beschaeftigt(true);
   await speichern();
   const t = logTool("Ausführen", `python ${datei()}`);
-  ausgabe.innerHTML = `<span class="trenner">$ python ${esc(datei())}</span>\n<span class="dim">läuft …</span>`;
+  ausgabe.innerHTML = `<span class="trenner">$ python ${esc(datei())}</span>\n<span class="dim">${pythonLaedt() ? "Python wird beim ersten Mal geladen (einige Sekunden) …" : "läuft …"}</span>`;
   $("#laufInfo").textContent = "";
   try {
-    const r = await api("/api/ausfuehren", { lektion: S.nr, code: ta.value, stdin: $("#stdin").value });
+    const r = await B.ausfuehren({ lektion: aktuelleLektion(), code: ta.value, stdin: $("#stdin").value });
     ausgabe.innerHTML = ausgabeHtml(r, `python ${datei()}`) +
       `<span class="trenner">[beendet · ${r.dauer.toFixed(2)} s]</span>`;
     ausgabe.scrollTop = ausgabe.scrollHeight;
@@ -565,10 +650,10 @@ async function pruefen() {
   await speichern();
   const nr = S.nr;
   const t = logTool("Prüfen", datei());
-  ausgabe.innerHTML = `<span class="trenner">$ prüfe ${esc(datei())}</span>\n<span class="dim">Tests laufen …</span>`;
+  ausgabe.innerHTML = `<span class="trenner">$ prüfe ${esc(datei())}</span>\n<span class="dim">${pythonLaedt() ? "Python wird beim ersten Mal geladen (einige Sekunden) …" : "Tests laufen …"}</span>`;
   let r;
   try {
-    r = await api("/api/pruefen", { lektion: nr, code: ta.value });
+    r = await B.pruefen({ lektion: aktuelleLektion(), code: ta.value });
   } catch (err) {
     t.fertig([esc(err.message)], true);
     beschaeftigt(false);
@@ -598,7 +683,7 @@ async function pruefen() {
   t.fertig(zeilen, !r.ok);
 
   if (r.ok) {
-    S.fortschritt.erledigt = r.erledigt;
+    S.fortschritt = await B.fortschrittSpeichern({ erledigt: nr, code: { [nr]: ta.value } });
     fortschrittAnzeigen();
     const letzte = nr === S.lektionen.length;
     logSystem(`<span class="erfolg">Lektion ${nr} geschafft!</span> ` +
@@ -708,14 +793,17 @@ async function befehl(eingabeText) {
       willkommen(true);
       break;
     case "/modell":
+      await statusLaden();
       if (arg) {
-        await api("/api/einstellungen", { modell: arg });
-        await statusLaden();
-        logSystem(`Modell: <b>${esc(S.status.modell)}</b>${S.status.online ? "" : " (offline)"}`);
+        const treffer = S.status.modelle.find((m) => m.id === arg) ||
+          S.status.modelle.find((m) => m.id.toLowerCase().includes(arg.toLowerCase()));
+        if (treffer || B.name === "server") await modellLaden(treffer ? treffer.id : arg);
+        else logSystem(`Kein Modell gefunden, das zu <b>${esc(arg)}</b> passt.`, "?");
       } else {
-        await statusLaden();
-        logSystem(`Modell: <b>${esc(S.status.modell || "–")}</b> · ${S.status.online ? '<span class="ok">online</span>' : '<span class="err">offline</span>'}` +
-          (S.status.modelle.length ? `<br><span class="dim">Installiert: ${S.status.modelle.map(esc).join(", ")}</span>` : ""));
+        logSystem(`Modell: <b>${esc(kurzname(S.status.modell) || "–")}</b> · ${S.status.online ? '<span class="ok">bereit</span>' : '<span class="err">nicht geladen</span>'}` +
+          ` <span class="dim">(${B.name === "browser" ? "läuft im Browser" : "lokaler Server"})</span>` +
+          (S.status.modelle.length ? `<br><span class="dim">Verfügbar: ${S.status.modelle.map((m) => esc(kurzname(m.id))).join(", ")}</span>` : ""));
+        if (!S.status.online && B.name === "browser") kiHinweis();
       }
       break;
     default:
@@ -766,6 +854,7 @@ function senden() {
 }
 
 eingabe.addEventListener("input", () => { menueAuswahl = 0; eingabeHoehe(); menueAktualisieren(); });
+$("#knopfSenden").addEventListener("click", () => { senden(); eingabe.focus(); });
 eingabe.addEventListener("keydown", (e) => {
   if (!menue.hidden) {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -827,19 +916,46 @@ function willkommen(kurz = false) {
   el.className = "welcome";
   el.innerHTML =
     `<div class="head"><b>◆</b> Willkommen beim <b>Code-Trainer</b>!</div>` +
-    (kurz ? "" : `<div class="sub">Lerne Python Schritt für Schritt – mit einem KI-Tutor, der komplett lokal läuft.<br>` +
-      `${S.lektionen.length} Lektionen · Fortschritt ${n}/${S.lektionen.length} · Modell: ${esc(S.status.modell || "–")}</div>`) +
+    (kurz ? "" : `<div class="sub">Lerne Python Schritt für Schritt – mit einem KI-Tutor, der ${B.name === "browser" ? "komplett in deinem Browser" : "lokal auf deinem Computer"} läuft.<br>` +
+      `${S.lektionen.length} Lektionen · Fortschritt ${n}/${S.lektionen.length}</div>`) +
     `<div class="sub">/hilfe für Befehle · Fragen einfach eintippen</div>`;
   log.append(el);
 }
 
+function pythonLaedt() { return B.name === "browser" && !B.python.bereit; }
+
+function laufzeitAnzeigen() {
+  const info = $("#laufzeitInfo");
+  if (B.name === "server") { info.textContent = "Python 3 · lokaler Server"; return; }
+  const p = B.python;
+  info.textContent = p.fehler ? "⚠ Python nicht geladen" : p.bereit ? `Python ${p.version} · im Browser` : "Python wird geladen …";
+  info.title = p.fehler || "";
+}
+
 async function start() {
-  const [lektionen, fortschritt] = await Promise.all([api("/api/lektionen"), api("/api/fortschritt")]);
+  B = await backendWaehlen();
+  const lektionenLaden = fetch("lektionen.json", { cache: "no-cache" }).then((r) => {
+    if (!r.ok) throw new Error("lektionen.json nicht gefunden");
+    return r.json();
+  });
+  await B.init();
+  const [lektionen, fortschritt] = await Promise.all([lektionenLaden, B.fortschrittLaden()]);
   S.lektionen = lektionen;
   S.fortschritt = fortschritt;
+  if (B.name === "browser") {
+    B.beiAenderung(() => { laufzeitAnzeigen(); statusLaden(); });
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+  laufzeitAnzeigen();
   await statusLaden();
   willkommen();
-  if (!S.status.online) offlineAntwort("hinweis", {});
+  if (B.name === "browser" && B.python.fehler) logSystem(`<b>Python konnte nicht geladen werden.</b> <span class="dim">${esc(B.python.fehler)} – Beim ersten Start braucht der Browser eine Internetverbindung.</span>`, "⚠");
+  if (!S.status.online) {
+    // Browser-Version: Modellliste kommt im Hintergrund – kurz warten, dann ggf. Einschalt-Hinweis
+    if (B.name === "browser" && S.status.webgpu !== false) {
+      setTimeout(async () => { await statusLaden(); if (!S.status.online && !S.status.laedt) kiHinweis(); }, 1500);
+    } else offlineAntwort("hinweis", {});
+  }
   let nr = fortschritt.aktuell || 1;
   while (nr > 1 && !freigeschaltet(nr)) nr--;
   if (fortschritt.erledigt.length || fortschritt.code[nr]) {
@@ -852,5 +968,5 @@ async function start() {
 }
 
 start().catch((err) => {
-  log.innerHTML = `<div class="msg system"><span class="bullet">⚠</span><div class="body err">Start fehlgeschlagen: ${esc(err.message)}<br>Läuft <code>python server.py</code>?</div></div>`;
+  log.innerHTML = `<div class="msg system"><span class="bullet">⚠</span><div class="body err">Start fehlgeschlagen: ${esc(err.message)}<br>Lade die Seite neu – beim ersten Start braucht der Browser eine Internetverbindung.</div></div>`;
 });

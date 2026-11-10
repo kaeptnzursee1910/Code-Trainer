@@ -1,0 +1,15 @@
+{
+  "name": "Code-Trainer · Python lernen",
+  "short_name": "Code-Trainer",
+  "description": "Lerne Python Schritt für Schritt mit einem KI-Tutor, der komplett im Browser läuft.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#141413",
+  "theme_color": "#1f1f1e",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

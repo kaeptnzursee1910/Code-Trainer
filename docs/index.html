@@ -2,10 +2,18 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Code-Trainer · Python lernen</title>
+  <meta name="description" content="Lerne Python Schritt für Schritt mit einem KI-Tutor – komplett im Browser oder mit lokalem Modell.">
+  <meta name="theme-color" content="#1f1f1e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Code-Trainer">
+  <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1l7 7-7 7-7-7z' fill='%23d97757'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/app.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <header class="topbar">
@@ -22,9 +30,9 @@
 
     <div class="spacer"></div>
 
-    <label class="model" title="Lokales Modell">
+    <label class="model" title="KI-Modell">
       <span id="modellPunkt" class="dot"></span>
-      <select id="modellWahl"><option>Modell wird gesucht …</option></select>
+      <select id="modellWahl" aria-label="KI-Modell"><option>Modell wird gesucht …</option></select>
     </label>
   </header>
 
@@ -34,7 +42,7 @@
       <div class="pane-head">
         <span class="tab"><span class="tab-icon">py</span><span id="dateiname">lektion_01.py</span><span id="ungespeichert" class="dim" hidden>●</span></span>
         <div class="actions">
-          <button id="knopfReset" title="Startcode wiederherstellen">↺ Reset</button>
+          <button id="knopfReset" title="Startcode wiederherstellen">↺<span class="lang"> Reset</span></button>
           <button id="knopfAusfuehren" title="Programm ausführen (Strg+Enter)">▶ Ausführen <kbd>Strg ↵</kbd></button>
           <button id="knopfPruefen" class="primary" title="Aufgabe prüfen (Strg+Shift+Enter)">✓ Prüfen <kbd>Strg ⇧ ↵</kbd></button>
         </div>
@@ -46,9 +54,24 @@
           <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Python-Code"></textarea>
         </div>
       </div>
+      <!-- Tastenleiste für Touch-Geräte (iPad): Zeichen, die auf der Bildschirmtastatur umständlich sind -->
+      <div id="tastenleiste" class="keybar" aria-label="Sonderzeichen">
+        <button data-taste="tab" title="Einrücken">⇥</button>
+        <button data-taste="untab" title="Ausrücken">⇤</button>
+        <button data-taste=":">:</button>
+        <button data-taste="()">( )</button>
+        <button data-taste="[]">[ ]</button>
+        <button data-taste="{}">{ }</button>
+        <button data-taste='""'>" "</button>
+        <button data-taste="=">=</button>
+        <button data-taste="==">==</button>
+        <button data-taste="#">#</button>
+        <button data-taste="_">_</button>
+        <button data-taste="print()">print()</button>
+      </div>
       <div class="statusline">
         <span id="cursorPos">Z 1, S 1</span>
-        <span class="dim">Python 3 · UTF-8 · Tab = 4 Leerzeichen</span>
+        <span id="laufzeitInfo" class="dim">Python 3 · Tab = 4 Leerzeichen</span>
       </div>
     </section>
 
@@ -68,8 +91,9 @@
           <div class="prompt-box">
             <span class="caret">&gt;</span>
             <textarea id="eingabe" rows="1" placeholder="Frag den Agenten … oder tippe / für Befehle" aria-label="Nachricht an den Agenten"></textarea>
+            <button id="knopfSenden" class="send" title="Senden" aria-label="Senden">↑</button>
           </div>
-          <div class="prompt-hint"><span>/ für Befehle · /hilfe</span><span>↵ senden · ⇧↵ neue Zeile · Esc abbrechen</span></div>
+          <div class="prompt-hint"><span>/ für Befehle · /hilfe</span><span class="lang">↵ senden · ⇧↵ neue Zeile · Esc abbrechen</span></div>
         </div>
       </section>
 
@@ -87,14 +111,14 @@
         </div>
         <div id="stdinBox" class="stdin-box" hidden>
           <label for="stdin">Eingaben für <code>input()</code> – eine pro Zeile, in der Reihenfolge der Fragen</label>
-          <textarea id="stdin" rows="3" spellcheck="false"></textarea>
+          <textarea id="stdin" rows="3" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         </div>
-        <pre id="ausgabe" class="output"><span class="dim">Hier erscheint die Ausgabe deines Programms. ▶ Ausführen mit Strg+Enter.</span></pre>
+        <pre id="ausgabe" class="output"><span class="dim">Hier erscheint die Ausgabe deines Programms.</span></pre>
       </section>
     </section>
   </main>
 
   <div id="lektionMenue" class="lesson-menu" hidden></div>
-  <script src="/app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,655 @@
+[
+ {
+  "titel": "Hallo, Python!",
+  "konzepte": [
+   "print()",
+   "Strings",
+   "Kommentare mit #"
+  ],
+  "erklaerung": "Ein Python-Programm ist eine Folge von Anweisungen, die **von oben nach unten** ausgeführt werden.\n\nMit `print()` gibst du etwas aus. Text – in Python **String** genannt – steht in Anführungszeichen, einfache oder doppelte:\n\n```python\nprint(\"Hallo!\")\nprint('Python macht Spaß')\nprint(3 + 4)              # Zahlen brauchen keine Anführungszeichen\nprint(\"Ergebnis:\", 42)    # mehrere Werte, durch Komma getrennt\n```\n\n- Jedes `print()` beginnt eine **neue Zeile**.\n- Alles hinter `#` ist ein **Kommentar**. Python ignoriert ihn – er ist eine Notiz für Menschen.\n- Groß-/Kleinschreibung zählt: `Print()` funktioniert nicht, nur `print()`.",
+  "aufgabe": "Schreibe ein Programm, das diese zwei Zeilen ausgibt:\n\n1. `Hallo, Welt!`\n2. einen Satz über dich, z. B. `Ich lerne Python.`\n\nSchreibe außerdem einen **eigenen Kommentar** mit `#` in deinen Code.",
+  "starter": "# Lektion 1 – Deine erste Ausgabe\n# Schreibe deinen Code unter diese Zeile.\n\n",
+  "tests": [
+   [
+    "Erste Zeile ist »Hallo, Welt!«",
+    "z = AUSGABE.splitlines()\nassert z, 'Es wurde nichts ausgegeben. Benutze print().'\nassert z[0].strip() == 'Hallo, Welt!', f'Die erste Zeile lautet {z[0]!r} – erwartet war genau »Hallo, Welt!« (Komma und Ausrufezeichen beachten).'"
+   ],
+   [
+    "Mindestens zwei Zeilen Ausgabe",
+    "assert len([l for l in AUSGABE.splitlines() if l.strip()]) >= 2, 'Gib mindestens zwei Zeilen aus – dafür brauchst du zwei print()-Aufrufe.'"
+   ],
+   [
+    "Eigener Kommentar vorhanden",
+    "vorgabe = {'# Lektion 1 – Deine erste Ausgabe', '# Schreibe deinen Code unter diese Zeile.'}\nassert any('#' in l and l.strip() not in vorgabe for l in QUELLTEXT.splitlines()), 'Füge einen eigenen Kommentar hinzu, der mit # beginnt.'"
+   ]
+  ],
+  "tipps": [
+   "Text, den du ausgeben willst, gehört in Anführungszeichen: print(\"...\")",
+   "Für zwei Zeilen brauchst du zwei print()-Anweisungen untereinander.",
+   "Ein Kommentar ist eine Zeile, die mit # beginnt, z. B. # Mein erstes Programm"
+  ],
+  "loesung": "# Mein erstes Programm\nprint(\"Hallo, Welt!\")\nprint(\"Ich lerne Python.\")\n",
+  "id": 1,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_01.py"
+ },
+ {
+  "titel": "Variablen",
+  "konzepte": [
+   "Variablen",
+   "Zuweisung mit =",
+   "Neu-Zuweisung",
+   "Namensregeln"
+  ],
+  "erklaerung": "Eine **Variable** ist ein Name für einen Wert. Mit `=` speicherst du einen Wert unter einem Namen:\n\n```python\nname = \"Ada\"\nalter = 36\nprint(name, \"ist\", alter, \"Jahre alt\")   # Ada ist 36 Jahre alt\nalter = alter + 1                        # rechts ausrechnen, links speichern\nprint(alter)                             # 37\n```\n\n- `=` heißt nicht „ist gleich“, sondern **„speichere den Wert rechts unter dem Namen links“**.\n- Eine Variable kann jederzeit einen **neuen Wert** bekommen – auch einen, der aus ihrem alten Wert berechnet wird.\n- Namen bestehen aus Buchstaben, Ziffern und `_`, dürfen aber **nicht mit einer Ziffer beginnen**. `Alter` und `alter` sind verschiedene Namen.\n- Üblich ist `klein_mit_unterstrichen`. Umlaute gehen, sind aber unüblich (`groesse` statt `größe`).",
+  "aufgabe": "1. Lege eine Variable `stadt` mit dem Namen einer Stadt an (Text).\n2. Lege eine Variable `einwohner` mit einer ganzen Zahl an.\n3. Gib beide mit **einem** `print()` aus, z. B. `Hamburg hat 1850000 Einwohner`.\n4. Erhöhe danach `einwohner` um 1000 – benutze dabei die Variable selbst – und gib die neue Zahl aus.",
+  "starter": "# Lektion 2 – Variablen\n\n",
+  "tests": [
+   [
+    "`stadt` ist ein Text",
+    "assert isinstance(stadt, str) and stadt.strip(), 'stadt sollte ein nicht-leerer Text in Anführungszeichen sein.'"
+   ],
+   [
+    "`einwohner` ist eine ganze Zahl",
+    "assert type(einwohner) is int, 'einwohner sollte eine ganze Zahl ohne Anführungszeichen sein, z. B. 1850000.'"
+   ],
+   [
+    "Stadt und ursprüngliche Einwohnerzahl werden ausgegeben",
+    "assert stadt in AUSGABE and str(einwohner - 1000) in AUSGABE, 'Gib stadt und die Einwohnerzahl aus, bevor du sie erhöhst.'"
+   ],
+   [
+    "Einwohnerzahl wird mit der Variable selbst um 1000 erhöht",
+    "q = QUELLTEXT.replace(' ', '')\nassert 'einwohner=einwohner+1000' in q or 'einwohner+=1000' in q, 'Erhöhe mit einwohner = einwohner + 1000.'\nzeilen = [z for z in AUSGABE.splitlines() if z.strip()]\nassert zeilen and str(einwohner) in zeilen[-1], 'Die letzte Ausgabezeile sollte die neue Einwohnerzahl enthalten.'"
+   ]
+  ],
+  "tipps": [
+   "Text braucht Anführungszeichen: stadt = \"Hamburg\". Zahlen nicht: einwohner = 1850000",
+   "print() kann mehrere Werte mit Komma trennen: print(stadt, \"hat\", einwohner, \"Einwohner\")",
+   "Erhöhen geht mit: einwohner = einwohner + 1000 – danach noch einmal print(einwohner)."
+  ],
+  "loesung": "stadt = \"Hamburg\"\neinwohner = 1850000\nprint(stadt, \"hat\", einwohner, \"Einwohner\")\n\neinwohner = einwohner + 1000\nprint(\"Jetzt sind es\", einwohner)\n",
+  "id": 2,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_02.py"
+ },
+ {
+  "titel": "Datentypen",
+  "konzepte": [
+   "int",
+   "float",
+   "str",
+   "bool",
+   "type()",
+   "int()/float()/str()",
+   "Vergleich ergibt bool"
+  ],
+  "erklaerung": "Jeder Wert hat einen **Datentyp**:\n\n| Typ | Beispiele | Bedeutung |\n|---|---|---|\n| `int` | `42`, `-7` | ganze Zahl |\n| `float` | `3.14`, `2.0` | Kommazahl – mit **Punkt**! |\n| `str` | `\"Hallo\"`, `\"42\"` | Text |\n| `bool` | `True`, `False` | Wahrheitswert |\n\n`type(wert)` zeigt dir den Typ. Werte lassen sich **umwandeln**:\n\n```python\nzahl = int(\"42\")       # Text  → ganze Zahl\npreis = float(\"2.5\")   # Text  → Kommazahl\ntext = str(99)         # Zahl  → Text\nprint(\"3\" + \"4\")       # 34 – Texte werden aneinandergehängt\nprint(3 + 4)           # 7  – Zahlen werden addiert\nprint(type(3.0))       # <class 'float'>\n```\n\nEin **Vergleich** wie `5 > 3` liefert einen `bool`, hier `True`. Man kann ihn speichern: `ist_gross = groesse > 180`.",
+  "aufgabe": "Im Editor stehen zwei Texte: `preis_text = \"19.99\"` und `menge_text = \"3\"`.\n\n1. Wandle `preis_text` in eine Kommazahl um → `preis`.\n2. Wandle `menge_text` in eine ganze Zahl um → `menge`.\n3. Berechne `gesamt = preis * menge` und gib `gesamt` und `type(gesamt)` aus.\n4. Lege `ist_teuer` an: `True`, wenn `gesamt` größer als 50 ist. Benutze einen **Vergleich**, nicht direkt `True`.",
+  "starter": "# Lektion 3 – Datentypen\npreis_text = \"19.99\"\nmenge_text = \"3\"\n\n",
+  "tests": [
+   [
+    "`preis` ist die Kommazahl 19.99",
+    "assert type(preis) is float and preis == 19.99, 'preis sollte float(preis_text) sein.'"
+   ],
+   [
+    "`menge` ist die ganze Zahl 3",
+    "assert type(menge) is int and menge == 3, 'menge sollte int(menge_text) sein.'"
+   ],
+   [
+    "`gesamt` stimmt und wird mit Typ ausgegeben",
+    "assert abs(gesamt - 59.97) < 1e-6, f'gesamt ist {gesamt!r}, erwartet etwa 59.97.'\nassert \"<class 'float'>\" in AUSGABE, 'Gib auch type(gesamt) aus.'"
+   ],
+   [
+    "`ist_teuer` entsteht durch einen Vergleich",
+    "assert ist_teuer is True, 'ist_teuer sollte True sein, weil 59.97 > 50.'\nassert '>' in QUELLTEXT, 'Verwende einen Vergleich mit >.'"
+   ]
+  ],
+  "tipps": [
+   "float(\"19.99\") macht aus dem Text eine Kommazahl, int(\"3\") eine ganze Zahl.",
+   "print(gesamt, type(gesamt)) gibt Wert und Typ aus.",
+   "ist_teuer = gesamt > 50 – der Vergleich liefert direkt True oder False."
+  ],
+  "loesung": "preis_text = \"19.99\"\nmenge_text = \"3\"\n\npreis = float(preis_text)\nmenge = int(menge_text)\ngesamt = preis * menge\nprint(gesamt, type(gesamt))\n\nist_teuer = gesamt > 50\nprint(\"Teuer?\", ist_teuer)\n",
+  "id": 3,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_03.py"
+ },
+ {
+  "titel": "Rechnen mit Python",
+  "konzepte": [
+   "+ - * /",
+   "// ganzzahlige Division",
+   "% Rest",
+   "** Potenz",
+   "round()",
+   "+= Kurzschreibweise"
+  ],
+  "erklaerung": "Python ist ein guter Taschenrechner:\n\n| Operator | Bedeutung | Beispiel | Ergebnis |\n|---|---|---|---|\n| `+` `-` `*` | plus, minus, mal | `2 * 3` | `6` |\n| `/` | geteilt (immer float) | `7 / 2` | `3.5` |\n| `//` | ganzzahlig geteilt | `17 // 5` | `3` |\n| `%` | Rest der Division | `17 % 5` | `2` |\n| `**` | hoch | `2 ** 10` | `1024` |\n\n- Es gilt **Punkt vor Strich**; Klammern ändern die Reihenfolge: `(2 + 3) * 4` → `20`.\n- `round(3.14159, 2)` rundet auf `3.14`.\n- `x += 5` ist die Kurzform von `x = x + 5` (auch `-=`, `*=`, …).\n\n`//` und `%` sind ein starkes Paar: `125 // 60` → `2` volle Minuten, `125 % 60` → `5` übrige Sekunden.",
+  "aufgabe": "Vorgegeben ist `sekunden = 4000`. Berechne daraus mit `//` und `%`:\n\n- `stunden` – volle Stunden\n- `minuten` – volle restliche Minuten\n- `rest` – übrige Sekunden\n\nund gib alles aus, z. B. `1 h 6 min 40 s`. Rechne mit der Variablen `sekunden`, nicht mit fertigen Zahlen.",
+  "starter": "# Lektion 4 – Rechnen\nsekunden = 4000\n\n",
+  "tests": [
+   [
+    "`stunden` = 1",
+    "assert stunden == 1, f'stunden ist {stunden!r}. Eine Stunde hat 3600 Sekunden.'"
+   ],
+   [
+    "`minuten` = 6",
+    "assert minuten == 6, f'minuten ist {minuten!r}. Rechne mit dem Rest nach den Stunden.'"
+   ],
+   [
+    "`rest` = 40",
+    "assert rest == 40, f'rest ist {rest!r}. Was bleibt nach den vollen Minuten übrig?'"
+   ],
+   [
+    "Mit // und % aus `sekunden` berechnet",
+    "assert '//' in QUELLTEXT and '%' in QUELLTEXT, 'Benutze // und %.'\nassert QUELLTEXT.count('sekunden') >= 3, 'Rechne mit der Variablen sekunden statt mit festen Zahlen.'"
+   ],
+   [
+    "Ergebnis wird ausgegeben",
+    "assert all(str(v) in AUSGABE for v in (stunden, minuten, rest)), 'Gib stunden, minuten und rest aus.'"
+   ]
+  ],
+  "tipps": [
+   "Eine Stunde hat 3600 Sekunden: sekunden // 3600 ergibt die vollen Stunden.",
+   "Der Rest nach den Stunden ist sekunden % 3600. Davon sind // 60 die Minuten.",
+   "rest = sekunden % 60 – und zum Schluss print(stunden, \"h\", minuten, \"min\", rest, \"s\")."
+  ],
+  "loesung": "sekunden = 4000\n\nstunden = sekunden // 3600\nminuten = sekunden % 3600 // 60\nrest = sekunden % 60\nprint(stunden, \"h\", minuten, \"min\", rest, \"s\")\n",
+  "id": 4,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_04.py"
+ },
+ {
+  "titel": "Texte (Strings)",
+  "konzepte": [
+   "Index [i]",
+   "Slicing [a:b]",
+   "len()",
+   ".upper() .lower() .replace() .strip()",
+   "in",
+   "f-Strings"
+  ],
+  "erklaerung": "Ein String ist eine Folge von Zeichen. Jedes Zeichen hat eine Position, den **Index** – gezählt wird ab **0**, von hinten mit negativen Zahlen:\n\n```text\n  P   y   t   h   o   n\n  0   1   2   3   4   5\n -6  -5  -4  -3  -2  -1\n```\n\n```python\nwort = \"Python\"\nprint(wort[0])        # P\nprint(wort[-1])       # n\nprint(wort[0:3])      # Pyt   – von 0 bis VOR 3 (Slicing)\nprint(wort[-2:])      # on    – die letzten zwei\nprint(len(wort))      # 6\nprint(wort.upper())   # PYTHON  (.lower() → klein)\nprint(wort.replace(\"P\", \"J\"))   # Jython\nprint(\"th\" in wort)   # True\n```\n\n**f-Strings** setzen Werte bequem in Text ein – ein `f` vor dem Anführungszeichen, Variablen in `{}`:\n\n```python\nname = \"Ada\"\nprint(f\"{name} hat {len(name)} Buchstaben.\")   # Ada hat 3 Buchstaben.\n```",
+  "aufgabe": "Vorgegeben ist `wort = \"Programmieren\"`. Lege an:\n\n- `erster` – das erste Zeichen\n- `letzte_drei` – die letzten drei Zeichen\n- `laenge` – die Anzahl der Zeichen\n- `gross` – das Wort in Großbuchstaben\n- `satz` – mit einem **f-String**: `Programmieren hat 13 Buchstaben.` (Wort und Zahl aus den Variablen!)\n\nGib `satz` aus.",
+  "starter": "# Lektion 5 – Strings\nwort = \"Programmieren\"\n\n",
+  "tests": [
+   [
+    "`erster` ist »P«",
+    "assert erster == 'P', f'erster ist {erster!r}. Der erste Index ist 0.'"
+   ],
+   [
+    "`letzte_drei` ist »ren«",
+    "assert letzte_drei == 'ren', f'letzte_drei ist {letzte_drei!r}. Tipp: negativer Index beim Slicing.'"
+   ],
+   [
+    "`laenge` ist 13",
+    "assert laenge == 13, f'laenge ist {laenge!r}. Benutze len().'"
+   ],
+   [
+    "`gross` ist »PROGRAMMIEREN«",
+    "assert gross == 'PROGRAMMIEREN', f'gross ist {gross!r}. Benutze .upper().'"
+   ],
+   [
+    "`satz` per f-String gebaut und ausgegeben",
+    "assert satz == 'Programmieren hat 13 Buchstaben.', f'satz ist {satz!r}.'\nassert 'f\"' in QUELLTEXT or \"f'\" in QUELLTEXT, 'Baue satz mit einem f-String: f\"...\"'\nassert satz in AUSGABE, 'Gib satz mit print() aus.'"
+   ]
+  ],
+  "tipps": [
+   "wort[0] ist das erste Zeichen, wort[-3:] sind die letzten drei.",
+   "len(wort) zählt die Zeichen, wort.upper() macht alles groß.",
+   "satz = f\"{wort} hat {laenge} Buchstaben.\""
+  ],
+  "loesung": "wort = \"Programmieren\"\n\nerster = wort[0]\nletzte_drei = wort[-3:]\nlaenge = len(wort)\ngross = wort.upper()\nsatz = f\"{wort} hat {laenge} Buchstaben.\"\nprint(satz)\n",
+  "id": 5,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_05.py"
+ },
+ {
+  "titel": "Eingaben mit input()",
+  "konzepte": [
+   "input()",
+   "Eingabe ist immer str",
+   "int(input())"
+  ],
+  "erklaerung": "Mit `input()` fragt dein Programm den Benutzer nach einer Eingabe. Der Text in den Klammern ist die Frage:\n\n```python\nname = input(\"Wie heißt du? \")\nprint(f\"Schön, dich kennenzulernen, {name}!\")\n```\n\n**Wichtig:** `input()` liefert **immer einen String** – auch wenn jemand `42` eintippt. Zum Rechnen musst du umwandeln:\n\n```python\nzahl = int(input(\"Eine Zahl: \"))\nprint(zahl * 2)\n```\n\nIm Code-Trainer kommen die Eingaben aus dem Feld **⌨ Eingaben** im Ausgabe-Bereich unten rechts – **eine Eingabe pro Zeile**, in der Reihenfolge, in der dein Programm fragt.",
+  "aufgabe": "Frage mit `input()` nach dem **Namen** und dann nach dem **Geburtsjahr**. Gib danach aus:\n\n```text\nHallo, <Name>!\nIm Jahr 2030 wirst du <Alter> Jahre alt.\n```\n\nZum Ausprobieren trägst du unter **⌨ Eingaben** z. B. `Ada` und `1990` in zwei Zeilen ein. Beim Prüfen setzt der Trainer eigene Werte ein.",
+  "starter": "# Lektion 6 – Eingaben\n\n",
+  "stdin": "Ada\n1990\n",
+  "tests": [
+   [
+    "Begrüßung mit dem eingegebenen Namen",
+    "aus = starte('Ada\\n1990\\n')\nassert 'Hallo, Ada!' in aus, f'Bei Eingabe »Ada« erwarte ich »Hallo, Ada!«. Ausgabe war:\\n{aus}'\naus = starte('Linus\\n2000\\n')\nassert 'Hallo, Linus!' in aus, f'Bei Eingabe »Linus« erwarte ich »Hallo, Linus!«. Ausgabe war:\\n{aus}'"
+   ],
+   [
+    "Alter im Jahr 2030 wird berechnet",
+    "aus = starte('Ada\\n1990\\n')\nassert '40' in aus, f'Geboren 1990 → 2030 wird man 40. Ausgabe war:\\n{aus}'\naus = starte('Linus\\n2000\\n')\nassert '30' in aus, f'Geboren 2000 → 2030 wird man 30. Ausgabe war:\\n{aus}'"
+   ]
+  ],
+  "tipps": [
+   "name = input(\"Wie heißt du? \") speichert die Eingabe als Text.",
+   "Das Jahr musst du mit int() umwandeln: jahr = int(input(\"Geburtsjahr: \"))",
+   "Das Alter ist 2030 - jahr. Mit f-Strings: print(f\"Hallo, {name}!\")"
+  ],
+  "loesung": "name = input(\"Wie heißt du? \")\njahr = int(input(\"In welchem Jahr bist du geboren? \"))\n\nalter = 2030 - jahr\nprint(f\"Hallo, {name}!\")\nprint(f\"Im Jahr 2030 wirst du {alter} Jahre alt.\")\n",
+  "id": 6,
+  "modulname": "__main__",
+  "datei": "lektion_06.py"
+ },
+ {
+  "titel": "Entscheidungen mit if",
+  "konzepte": [
+   "if / elif / else",
+   "Einrückung",
+   "== != < > <= >=",
+   "and / or / not"
+  ],
+  "erklaerung": "Mit `if` trifft dein Programm Entscheidungen. Nach der Bedingung kommt ein **Doppelpunkt**, der zugehörige Code wird **eingerückt** (4 Leerzeichen – im Editor drückst du einfach Tab):\n\n```python\nalter = 16\nif alter >= 18:\n    print(\"Volljährig\")\nelif alter >= 14:\n    print(\"Jugendlich\")\nelse:\n    print(\"Kind\")\n```\n\nPython prüft von oben nach unten und führt **nur den ersten passenden Zweig** aus.\n\n| Vergleich | Bedeutung |\n|---|---|\n| `==` / `!=` | gleich / ungleich |\n| `<` `>` `<=` `>=` | kleiner, größer, … |\n\nBedingungen verknüpfen: `and` (beide), `or` (mindestens eine), `not` (Gegenteil).\nBeispiel: `if 6 <= stunde < 12 and not feiertag:`\n\nAchtung: `=` speichert, `==` vergleicht!",
+  "aufgabe": "Lies eine Temperatur ein: `temperatur = int(input(\"Temperatur: \"))`. Gib dann **genau ein** Wort aus:\n\n- unter 10 Grad → `kalt`\n- von 10 bis 24 Grad → `angenehm`\n- ab 25 Grad → `heiß`\n\nBenutze `if`, `elif` und `else`.",
+  "starter": "# Lektion 7 – if, elif, else\n\n",
+  "stdin": "18\n",
+  "tests": [
+   [
+    "unter 10 → kalt",
+    "for wert in ('-5', '9'):\n    aus = starte(wert)\n    assert 'kalt' in aus and 'angenehm' not in aus and 'heiß' not in aus, f'Bei {wert} Grad erwarte ich nur »kalt«. Ausgabe: {aus.strip()!r}'"
+   ],
+   [
+    "10 bis 24 → angenehm",
+    "for wert in ('10', '24'):\n    aus = starte(wert)\n    assert 'angenehm' in aus and 'kalt' not in aus and 'heiß' not in aus, f'Bei {wert} Grad erwarte ich nur »angenehm«. Ausgabe: {aus.strip()!r}'"
+   ],
+   [
+    "ab 25 → heiß",
+    "for wert in ('25', '31'):\n    aus = starte(wert)\n    assert 'heiß' in aus and 'kalt' not in aus and 'angenehm' not in aus, f'Bei {wert} Grad erwarte ich nur »heiß«. Ausgabe: {aus.strip()!r}'"
+   ],
+   [
+    "Verwendet if, elif und else",
+    "w = QUELLTEXT.split()\nassert 'if' in w and any(x.startswith('elif') for x in w) and any(x.startswith('else') for x in w), 'Benutze if, elif und else.'"
+   ]
+  ],
+  "tipps": [
+   "Erste Bedingung: if temperatur < 10: – darunter eingerückt print(\"kalt\")",
+   "Der nächste Fall kommt mit elif temperatur < 25: – unter 10 wurde ja schon abgefangen.",
+   "Alles Übrige fängt else: ab. Doppelpunkte und Einrückung nicht vergessen!"
+  ],
+  "loesung": "temperatur = int(input(\"Temperatur: \"))\n\nif temperatur < 10:\n    print(\"kalt\")\nelif temperatur < 25:\n    print(\"angenehm\")\nelse:\n    print(\"heiß\")\n",
+  "id": 7,
+  "modulname": "__main__",
+  "datei": "lektion_07.py"
+ },
+ {
+  "titel": "Schleifen mit while",
+  "konzepte": [
+   "while",
+   "Zählvariable",
+   "break",
+   "Endlosschleifen vermeiden"
+  ],
+  "erklaerung": "Eine `while`-Schleife wiederholt ihren eingerückten Block, **solange** die Bedingung wahr ist:\n\n```python\nzaehler = 1\nwhile zaehler <= 3:\n    print(\"Runde\", zaehler)\n    zaehler += 1          # ohne diese Zeile: Endlosschleife!\nprint(\"Fertig\")\n```\n\nAusgabe: `Runde 1`, `Runde 2`, `Runde 3`, `Fertig`.\n\n- Achte darauf, dass sich in der Schleife etwas ändert, damit die Bedingung irgendwann **falsch** wird. Läuft ein Programm im Trainer länger als 10 Sekunden, wird es abgebrochen.\n- Mit `break` verlässt du eine Schleife sofort:\n\n```python\nwhile True:\n    antwort = input(\"Weiter? (j/n) \")\n    if antwort == \"n\":\n        break\n```",
+  "aufgabe": "Schreibe einen **Countdown** mit `while`: Starte bei `zahl = 5`, gib die Zahlen 5, 4, 3, 2, 1 jeweils in einer eigenen Zeile aus und danach `Start!`.\n\nBenutze dafür **ein** `print()` in der Schleife – nicht fünf einzelne.",
+  "starter": "# Lektion 8 – while-Schleifen\nzahl = 5\n\n",
+  "tests": [
+   [
+    "Ausgabe ist 5, 4, 3, 2, 1, Start!",
+    "z = [l.strip() for l in AUSGABE.splitlines() if l.strip()]\nassert z == ['5', '4', '3', '2', '1', 'Start!'], f'Erwartet: 5 4 3 2 1 Start! (je eine Zeile), bekommen: {z}'"
+   ],
+   [
+    "Mit while-Schleife gelöst",
+    "assert 'while' in QUELLTEXT, 'Benutze eine while-Schleife.'\nassert QUELLTEXT.count('print') <= 3, 'Benutze ein print() in der Schleife statt vieler einzelner.'"
+   ]
+  ],
+  "tipps": [
+   "Die Bedingung lautet: while zahl > 0:",
+   "In der Schleife: erst print(zahl), dann zahl verkleinern mit zahl -= 1.",
+   "print(\"Start!\") steht nach der Schleife – also nicht eingerückt."
+  ],
+  "loesung": "zahl = 5\nwhile zahl > 0:\n    print(zahl)\n    zahl -= 1\nprint(\"Start!\")\n",
+  "id": 8,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_08.py"
+ },
+ {
+  "titel": "Schleifen mit for und range()",
+  "konzepte": [
+   "for",
+   "range(n)",
+   "range(start, stop, schritt)",
+   "Summieren in einer Schleife"
+  ],
+  "erklaerung": "Die `for`-Schleife geht **jedes Element einer Folge** durch. Mit `range()` erzeugst du Zahlenfolgen:\n\n```python\nfor i in range(3):          # 0, 1, 2   (bis VOR 3)\n    print(i)\n\nfor i in range(1, 4):       # 1, 2, 3\n    print(i)\n\nfor i in range(0, 10, 2):   # 0, 2, 4, 6, 8  (Schrittweite 2)\n    print(i)\n\nfor buchstabe in \"Hey\":     # H, e, y\n    print(buchstabe)\n```\n\nEin häufiges Muster ist das **Aufsummieren**:\n\n```python\nsumme = 0\nfor zahl in range(1, 5):\n    summe += zahl\nprint(summe)   # 10\n```\n\nFaustregel: `for`, wenn du weißt, wie oft; `while`, wenn es von einer Bedingung abhängt.",
+  "aufgabe": "1. Berechne mit einer `for`-Schleife die Summe aller Zahlen von 1 bis 100 in der Variablen `summe` und gib sie aus.\n2. Gib danach die **Fünferreihe** aus: 5, 10, 15, … 50 – jede Zahl in einer eigenen Zeile. Nutze `range()` mit Schrittweite.",
+  "starter": "# Lektion 9 – for und range()\n\n",
+  "tests": [
+   [
+    "`summe` ist 5050",
+    "assert summe == 5050, f'summe ist {summe!r}. Denk daran: range(1, 101) geht bis 100.'"
+   ],
+   [
+    "Summe mit for-Schleife gebildet",
+    "q = QUELLTEXT.replace(' ', '')\nassert 'for' in QUELLTEXT and ('summe+=' in q or 'summe=summe+' in q), 'Bilde die Summe in einer for-Schleife mit summe += zahl.'\nassert '5050' in AUSGABE, 'Gib summe aus.'"
+   ],
+   [
+    "Fünferreihe 5 … 50 wird ausgegeben",
+    "z = [l.strip() for l in AUSGABE.splitlines()]\nfehlt = [str(5 * i) for i in range(1, 11) if str(5 * i) not in z]\nassert not fehlt, f'Diese Zahlen fehlen als eigene Zeile: {fehlt}'\nassert 'range(5' in QUELLTEXT.replace(' ', ''), 'Nutze range(5, 51, 5).'"
+   ]
+  ],
+  "tipps": [
+   "Starte mit summe = 0 und addiere in for zahl in range(1, 101): jede Zahl dazu.",
+   "Die Summe gibst du nach der Schleife aus (nicht eingerückt).",
+   "Die Fünferreihe: for zahl in range(5, 51, 5): print(zahl)"
+  ],
+  "loesung": "summe = 0\nfor zahl in range(1, 101):\n    summe += zahl\nprint(\"Summe:\", summe)\n\nfor zahl in range(5, 51, 5):\n    print(zahl)\n",
+  "id": 9,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_09.py"
+ },
+ {
+  "titel": "Listen",
+  "konzepte": [
+   "[ ... ]",
+   "Index",
+   ".append() .remove() .insert() .pop()",
+   ".sort() / sorted()",
+   "len() max() min() sum()",
+   "for über Listen"
+  ],
+  "erklaerung": "Eine **Liste** speichert mehrere Werte in einer festen Reihenfolge:\n\n```python\nfarben = [\"rot\", \"grün\", \"blau\"]\nprint(farben[0])          # rot\nfarben.append(\"gelb\")     # hinten anfügen\nfarben.insert(0, \"weiß\")  # an Position 0 einfügen\nfarben.remove(\"grün\")     # Element entfernen\nletzte = farben.pop()     # letztes Element herausnehmen\nprint(len(farben))        # Anzahl\nprint(\"rot\" in farben)    # True\n\nfor farbe in farben:      # alle durchgehen\n    print(farbe)\n```\n\n- `liste.sort()` sortiert die Liste selbst, `sorted(liste)` liefert eine neue, sortierte Liste.\n- Für Zahlenlisten gibt es `sum()`, `min()`, `max()`.\n- Slicing funktioniert wie bei Strings: `farben[1:3]`.\n\nKleiner Stolperstein: Beim Sortieren landen Wörter mit **Umlaut am Anfang** hinten, weil Python nach Zeichencodes sortiert.",
+  "aufgabe": "Vorgegeben ist `einkauf = [\"Brot\", \"Milch\", \"Äpfel\"]`.\n\n1. Füge `\"Käse\"` hinzu und entferne `\"Milch\"`.\n2. Sortiere die Liste.\n3. Gib jedes Element mit einer `for`-Schleife in einer eigenen Zeile aus.\n4. Speichere die Anzahl der Elemente in `anzahl`.\n5. Finde mit einer Schleife das **längste** Wort und speichere es in `laengstes`.",
+  "starter": "# Lektion 10 – Listen\neinkauf = [\"Brot\", \"Milch\", \"Äpfel\"]\n\n",
+  "tests": [
+   [
+    "Liste enthält Brot, Käse, Äpfel – ohne Milch",
+    "assert sorted(einkauf) == sorted(['Brot', 'Käse', 'Äpfel']), f'einkauf ist {einkauf}.'"
+   ],
+   [
+    "Liste ist sortiert",
+    "assert einkauf == sorted(einkauf), f'einkauf ist nicht sortiert: {einkauf}'\nassert '.sort(' in QUELLTEXT or 'sorted(' in QUELLTEXT, 'Benutze .sort() oder sorted().'"
+   ],
+   [
+    "Alle Elemente werden einzeln ausgegeben",
+    "z = [l.strip() for l in AUSGABE.splitlines()]\nassert all(e in z for e in einkauf), 'Gib jedes Element in einer eigenen Zeile aus.'\nassert 'for' in QUELLTEXT, 'Benutze eine for-Schleife.'"
+   ],
+   [
+    "`anzahl` ist 3",
+    "assert anzahl == 3, f'anzahl ist {anzahl!r}. Benutze len().'"
+   ],
+   [
+    "`laengstes` ist »Äpfel«",
+    "assert laengstes == 'Äpfel', f'laengstes ist {laengstes!r}.'"
+   ]
+  ],
+  "tipps": [
+   "einkauf.append(\"Käse\") fügt hinzu, einkauf.remove(\"Milch\") entfernt.",
+   "einkauf.sort() und danach: for artikel in einkauf: print(artikel)",
+   "Für das längste Wort: laengstes = \"\" und in der Schleife if len(artikel) > len(laengstes): laengstes = artikel"
+  ],
+  "loesung": "einkauf = [\"Brot\", \"Milch\", \"Äpfel\"]\n\neinkauf.append(\"Käse\")\neinkauf.remove(\"Milch\")\neinkauf.sort()\n\nfor artikel in einkauf:\n    print(artikel)\n\nanzahl = len(einkauf)\n\nlaengstes = \"\"\nfor artikel in einkauf:\n    if len(artikel) > len(laengstes):\n        laengstes = artikel\nprint(\"Längstes Wort:\", laengstes)\n",
+  "id": 10,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_10.py"
+ },
+ {
+  "titel": "Dictionaries",
+  "konzepte": [
+   "{schlüssel: wert}",
+   "d[schlüssel]",
+   ".get()",
+   "del",
+   ".keys() .values() .items()"
+  ],
+  "erklaerung": "Ein **Dictionary** ordnet **Schlüsseln** Werte zu – wie ein Wörterbuch:\n\n```python\npreise = {\"Apfel\": 0.5, \"Brot\": 2.2}\nprint(preise[\"Brot\"])         # 2.2\npreise[\"Käse\"] = 3.9          # neuer Eintrag\npreise[\"Apfel\"] = 0.6         # Wert ändern\ndel preise[\"Brot\"]            # Eintrag löschen\nprint(\"Käse\" in preise)       # True – prüft Schlüssel\n```\n\nGreifst du mit `[]` auf einen **fehlenden** Schlüssel zu, gibt es einen `KeyError`. Sicherer ist `.get()` mit Ersatzwert:\n\n```python\nprint(preise.get(\"Milch\", 0))   # 0\n```\n\nAlle Einträge durchgehen:\n\n```python\nfor ware, preis in preise.items():\n    print(f\"{ware} kostet {preis} €\")\n```\n\n`.keys()` liefert nur die Schlüssel, `.values()` nur die Werte.",
+  "aufgabe": "Vorgegeben ist ein `telefonbuch`.\n\n1. Füge `\"Clara\"` mit einer Nummer deiner Wahl hinzu.\n2. Ändere die Nummer von `\"Ben\"`.\n3. Frage mit `.get()` die Nummer von `\"Dora\"` ab, mit `\"unbekannt\"` als Ersatzwert → `nummer_dora`.\n4. Gib alle Einträge mit `.items()` aus, jeweils im Format `Name: Nummer`.",
+  "starter": "# Lektion 11 – Dictionaries\ntelefonbuch = {\"Anna\": \"0151-1234\", \"Ben\": \"0160-5678\"}\n\n",
+  "tests": [
+   [
+    "Clara wurde hinzugefügt",
+    "assert 'Clara' in telefonbuch, 'Füge Clara hinzu: telefonbuch[\"Clara\"] = \"...\"'"
+   ],
+   [
+    "Bens Nummer wurde geändert",
+    "assert telefonbuch.get('Ben') not in (None, '0160-5678'), 'Ändere die Nummer von Ben.'\nassert telefonbuch.get('Anna') == '0151-1234', 'Annas Eintrag sollte unverändert bleiben.'"
+   ],
+   [
+    "`nummer_dora` per .get() ist »unbekannt«",
+    "assert nummer_dora == 'unbekannt', f'nummer_dora ist {nummer_dora!r}.'\nassert '.get(' in QUELLTEXT, 'Benutze .get() mit Ersatzwert.'"
+   ],
+   [
+    "Alle Einträge als »Name: Nummer« ausgegeben",
+    "fehlt = [n for n, t in telefonbuch.items() if f'{n}: {t}' not in AUSGABE]\nassert not fehlt, f'Diese Einträge fehlen im Format »Name: Nummer«: {fehlt}'\nassert '.items()' in QUELLTEXT, 'Benutze .items() in der Schleife.'"
+   ]
+  ],
+  "tipps": [
+   "Neuer Eintrag oder Änderung funktionieren gleich: telefonbuch[\"Clara\"] = \"0170-0000\"",
+   "nummer_dora = telefonbuch.get(\"Dora\", \"unbekannt\")",
+   "for name, nummer in telefonbuch.items(): print(f\"{name}: {nummer}\")"
+  ],
+  "loesung": "telefonbuch = {\"Anna\": \"0151-1234\", \"Ben\": \"0160-5678\"}\n\ntelefonbuch[\"Clara\"] = \"0170-2468\"\ntelefonbuch[\"Ben\"] = \"0160-9999\"\n\nnummer_dora = telefonbuch.get(\"Dora\", \"unbekannt\")\nprint(\"Dora:\", nummer_dora)\n\nfor name, nummer in telefonbuch.items():\n    print(f\"{name}: {nummer}\")\n",
+  "id": 11,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_11.py"
+ },
+ {
+  "titel": "Funktionen",
+  "konzepte": [
+   "def",
+   "Parameter",
+   "return",
+   "Standardwerte",
+   "return vs. print"
+  ],
+  "erklaerung": "Mit `def` schreibst du eigene **Funktionen** – wiederverwendbare Bausteine:\n\n```python\ndef verdopple(zahl):\n    \"\"\"Gibt das Doppelte zurück.\"\"\"\n    return zahl * 2\n\nergebnis = verdopple(21)\nprint(ergebnis)          # 42\n```\n\n- In den Klammern stehen die **Parameter** – die Eingaben der Funktion.\n- `return` gibt ein Ergebnis **zurück** und beendet die Funktion. Ohne `return` liefert sie `None`.\n- **`return` ist nicht `print`:** `print` zeigt nur etwas an, `return` liefert einen Wert, mit dem du weiterrechnen kannst.\n- Parameter können **Standardwerte** haben:\n\n```python\ndef gruss(name, gruss_wort=\"Hallo\"):\n    return f\"{gruss_wort}, {name}!\"\n\nprint(gruss(\"Ada\"))            # Hallo, Ada!\nprint(gruss(\"Ada\", \"Moin\"))    # Moin, Ada!\n```\n\nVariablen, die in einer Funktion entstehen, gibt es nur **in** dieser Funktion.",
+  "aufgabe": "Schreibe drei Funktionen, die ihr Ergebnis mit `return` zurückgeben:\n\n1. `flaeche(breite, hoehe=1)` – Fläche eines Rechtecks.\n2. `ist_gerade(zahl)` – `True`, wenn die Zahl gerade ist, sonst `False`.\n3. `begruessung(name, sprache=\"de\")` – liefert `\"Hallo, <name>!\"`, bei `sprache=\"en\"` aber `\"Hello, <name>!\"`.\n\nProbiere sie unten im Code mit ein paar `print()`-Aufrufen aus.",
+  "starter": "# Lektion 12 – Funktionen\n\n",
+  "tests": [
+   [
+    "`flaeche` rechnet richtig",
+    "assert flaeche(3, 4) == 12, f'flaeche(3, 4) ergibt {flaeche(3, 4)!r}, erwartet 12.'\nassert flaeche(5) == 5, 'flaeche(5) sollte mit hoehe=1 den Wert 5 liefern.'"
+   ],
+   [
+    "`ist_gerade` liefert True/False",
+    "assert ist_gerade(4) is True and ist_gerade(0) is True, 'ist_gerade(4) sollte True liefern.'\nassert ist_gerade(7) is False, 'ist_gerade(7) sollte False liefern.'"
+   ],
+   [
+    "`begruessung` auf Deutsch",
+    "assert begruessung('Ada') == 'Hallo, Ada!', f'begruessung(\"Ada\") ergibt {begruessung(\"Ada\")!r}.'"
+   ],
+   [
+    "`begruessung` auf Englisch",
+    "assert begruessung('Ada', 'en') == 'Hello, Ada!', f'begruessung(\"Ada\", \"en\") ergibt {begruessung(\"Ada\", \"en\")!r}.'"
+   ]
+  ],
+  "tipps": [
+   "def flaeche(breite, hoehe=1): und darunter eingerückt return breite * hoehe",
+   "Gerade heißt: Rest bei Division durch 2 ist 0 → return zahl % 2 == 0",
+   "In begruessung: if sprache == \"en\": return f\"Hello, {name}!\" – sonst die deutsche Variante."
+  ],
+  "loesung": "def flaeche(breite, hoehe=1):\n    return breite * hoehe\n\n\ndef ist_gerade(zahl):\n    return zahl % 2 == 0\n\n\ndef begruessung(name, sprache=\"de\"):\n    if sprache == \"en\":\n        return f\"Hello, {name}!\"\n    return f\"Hallo, {name}!\"\n\n\nprint(flaeche(3, 4))\nprint(ist_gerade(7))\nprint(begruessung(\"Ada\", \"en\"))\n",
+  "id": 12,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_12.py"
+ },
+ {
+  "titel": "Fehler behandeln",
+  "konzepte": [
+   "Fehlermeldungen lesen",
+   "try / except",
+   "else / finally",
+   "raise",
+   "häufige Fehlertypen"
+  ],
+  "erklaerung": "Fehler gehören zum Programmieren. Lies die **letzte Zeile** einer Fehlermeldung zuerst – sie nennt Typ und Grund, darüber steht die Zeilennummer.\n\n| Fehler | typische Ursache |\n|---|---|\n| `SyntaxError` | Tippfehler im Aufbau, z. B. fehlender `:` |\n| `NameError` | Name unbekannt – vertippt oder nicht definiert |\n| `TypeError` | falscher Typ, z. B. `\"3\" + 4` |\n| `ValueError` | richtiger Typ, falscher Wert, z. B. `int(\"abc\")` |\n| `ZeroDivisionError` | Division durch 0 |\n| `KeyError` / `IndexError` | Schlüssel / Position gibt es nicht |\n\nMit `try`/`except` fängst du erwartbare Fehler ab:\n\n```python\ntry:\n    zahl = int(input(\"Zahl: \"))\nexcept ValueError:\n    print(\"Das war keine Zahl.\")\nelse:\n    print(\"Danke!\")          # nur, wenn kein Fehler kam\nfinally:\n    print(\"Wird immer ausgeführt.\")\n```\n\nFange **gezielt** bestimmte Fehler ab, nicht pauschal alles. Eigene Fehler löst du mit `raise` aus:\n\n```python\nif betrag < 0:\n    raise ValueError(\"Betrag darf nicht negativ sein\")\n```",
+  "aufgabe": "Schreibe drei Funktionen:\n\n1. `sicher_teilen(a, b)` – gibt `a / b` zurück, bei Division durch 0 aber `None`. Fange dafür `ZeroDivisionError` ab.\n2. `als_zahl(text)` – wandelt `text` mit `int()` um; ist das nicht möglich, gibt sie `0` zurück.\n3. `alter_pruefen(alter)` – löst bei negativem Alter einen `ValueError` aus, sonst gibt sie `alter` zurück.",
+  "starter": "# Lektion 13 – Fehler behandeln\n\n",
+  "tests": [
+   [
+    "`sicher_teilen` teilt normal",
+    "assert sicher_teilen(10, 2) == 5, 'sicher_teilen(10, 2) sollte 5 ergeben.'"
+   ],
+   [
+    "`sicher_teilen` fängt Division durch 0 ab",
+    "assert sicher_teilen(1, 0) is None, 'sicher_teilen(1, 0) sollte None zurückgeben.'\nassert 'except ZeroDivisionError' in QUELLTEXT, 'Fange gezielt ZeroDivisionError ab.'"
+   ],
+   [
+    "`als_zahl` wandelt um oder liefert 0",
+    "assert als_zahl('42') == 42, 'als_zahl(\"42\") sollte 42 ergeben.'\nassert als_zahl('abc') == 0, 'als_zahl(\"abc\") sollte 0 ergeben.'\nassert 'ValueError' in QUELLTEXT, 'Fange ValueError ab.'"
+   ],
+   [
+    "`alter_pruefen` löst bei negativem Alter ValueError aus",
+    "assert alter_pruefen(30) == 30, 'alter_pruefen(30) sollte 30 zurückgeben.'\ntry:\n    alter_pruefen(-1)\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError('alter_pruefen(-1) sollte einen ValueError auslösen (raise ValueError(...)).')"
+   ]
+  ],
+  "tipps": [
+   "Aufbau: try: return a / b – darunter except ZeroDivisionError: return None",
+   "In als_zahl: try: return int(text) / except ValueError: return 0",
+   "if alter < 0: raise ValueError(\"Alter darf nicht negativ sein\") – danach return alter"
+  ],
+  "loesung": "def sicher_teilen(a, b):\n    try:\n        return a / b\n    except ZeroDivisionError:\n        return None\n\n\ndef als_zahl(text):\n    try:\n        return int(text)\n    except ValueError:\n        return 0\n\n\ndef alter_pruefen(alter):\n    if alter < 0:\n        raise ValueError(\"Alter darf nicht negativ sein\")\n    return alter\n\n\nprint(sicher_teilen(10, 0))\nprint(als_zahl(\"zwölf\"))\n",
+  "id": 13,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_13.py"
+ },
+ {
+  "titel": "Module & Comprehensions",
+  "konzepte": [
+   "import",
+   "from … import",
+   "math",
+   "random",
+   "List Comprehension",
+   "Dict Comprehension"
+  ],
+  "erklaerung": "**Module** bringen fertige Funktionen mit. Du lädst sie mit `import`:\n\n```python\nimport math\nprint(math.sqrt(16))      # 4.0\nprint(math.pi)            # 3.141592653589793\n\nfrom random import randint, choice\nprint(randint(1, 6))      # Würfelwurf 1–6\nprint(choice([\"a\", \"b\"])) # zufälliges Element\n```\n\n**Comprehensions** bauen Listen und Dictionaries in einer Zeile:\n\n```python\n# klassisch …\ndoppelt = []\nfor x in range(5):\n    doppelt.append(x * 2)\n\n# … als List Comprehension\ndoppelt = [x * 2 for x in range(5)]           # [0, 2, 4, 6, 8]\n\n# mit Bedingung\nungerade = [x for x in range(10) if x % 2 == 1]\n\n# Dict Comprehension\nquadrat = {x: x ** 2 for x in range(1, 4)}    # {1: 1, 2: 4, 3: 9}\n```",
+  "aufgabe": "1. `quadrate` – Liste der Quadratzahlen von 1 bis 10 (also 1, 4, … 100).\n2. `gerade` – alle geraden Zahlen von 1 bis 20.\n3. `laengen` – Dictionary, das jedem Wort aus `[\"Python\", \"ist\", \"toll\"]` seine Länge zuordnet.\n4. `kreis` – Fläche eines Kreises mit Radius 3 (`math.pi * r ** 2`), auf 2 Stellen gerundet.\n5. `wuerfel` – eine Zufallszahl von 1 bis 6 mit `randint`.\n\nBenutze für 1–3 jeweils eine Comprehension.",
+  "starter": "# Lektion 14 – Module & Comprehensions\n\n",
+  "tests": [
+   [
+    "`quadrate` stimmt",
+    "assert quadrate == [1, 4, 9, 16, 25, 36, 49, 64, 81, 100], f'quadrate ist {quadrate}'"
+   ],
+   [
+    "`gerade` stimmt",
+    "assert gerade == list(range(2, 21, 2)), f'gerade ist {gerade}'"
+   ],
+   [
+    "`laengen` stimmt",
+    "assert laengen == {'Python': 6, 'ist': 3, 'toll': 4}, f'laengen ist {laengen}'"
+   ],
+   [
+    "`kreis` mit math berechnet",
+    "assert kreis == 28.27, f'kreis ist {kreis!r}, erwartet 28.27 (round(..., 2)).'\nassert 'import math' in QUELLTEXT, 'Importiere math.'"
+   ],
+   [
+    "`wuerfel` mit randint",
+    "assert 1 <= wuerfel <= 6, f'wuerfel ist {wuerfel!r}'\nassert 'randint' in QUELLTEXT, 'Benutze randint aus dem Modul random.'"
+   ],
+   [
+    "Comprehensions verwendet",
+    "import re\nassert len(re.findall(r'[\\[{][^\\]}]*\\bfor\\b', QUELLTEXT)) >= 3, 'Baue quadrate, gerade und laengen jeweils mit einer Comprehension.'"
+   ]
+  ],
+  "tipps": [
+   "quadrate = [x ** 2 for x in range(1, 11)]",
+   "Mit Bedingung: [x for x in range(1, 21) if x % 2 == 0]. Für laengen: {w: len(w) for w in woerter}",
+   "import math und from random import randint ganz oben; kreis = round(math.pi * 3 ** 2, 2)"
+  ],
+  "loesung": "import math\nfrom random import randint\n\nquadrate = [x ** 2 for x in range(1, 11)]\ngerade = [x for x in range(1, 21) if x % 2 == 0]\nlaengen = {w: len(w) for w in [\"Python\", \"ist\", \"toll\"]}\nkreis = round(math.pi * 3 ** 2, 2)\nwuerfel = randint(1, 6)\n\nprint(quadrate)\nprint(gerade)\nprint(laengen)\nprint(kreis, wuerfel)\n",
+  "id": 14,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_14.py"
+ },
+ {
+  "titel": "Klassen & Objekte",
+  "konzepte": [
+   "class",
+   "__init__",
+   "self",
+   "Attribute",
+   "Methoden",
+   "__str__"
+  ],
+  "erklaerung": "Eine **Klasse** ist ein Bauplan, aus dem du **Objekte** erzeugst. Objekte bündeln Daten (**Attribute**) und Funktionen (**Methoden**):\n\n```python\nclass Hund:\n    def __init__(self, name, alter=1):   # wird beim Erzeugen aufgerufen\n        self.name = name                 # Attribut\n        self.alter = alter\n\n    def bellen(self):                    # Methode\n        return f\"{self.name} sagt: Wuff!\"\n\n    def __str__(self):                   # Text für print()\n        return f\"Hund {self.name} ({self.alter} Jahre)\"\n\nbello = Hund(\"Bello\", 3)\nprint(bello.bellen())    # Bello sagt: Wuff!\nprint(bello)             # Hund Bello (3 Jahre)\nbello.alter += 1\n```\n\n- `self` ist das Objekt selbst – jede Methode bekommt es als ersten Parameter.\n- Jedes Objekt hat **eigene** Attribute: Zwei Hunde teilen sich nicht ihren Namen.",
+  "aufgabe": "Schreibe eine Klasse `Konto`:\n\n- `Konto(inhaber, kontostand=0)` speichert beides als Attribute.\n- `einzahlen(betrag)` erhöht den Kontostand; bei `betrag <= 0` → `ValueError`.\n- `abheben(betrag)` verringert ihn; ist nicht genug Geld da → `ValueError` (Kontostand bleibt gleich).\n- `print(konto)` zeigt z. B. `Konto von Anna: 70 €` (über `__str__`).",
+  "starter": "# Lektion 15 – Klassen\n\n",
+  "tests": [
+   [
+    "Konto anlegen",
+    "k = Konto('Anna')\nassert k.inhaber == 'Anna' and k.kontostand == 0, 'Konto(\"Anna\") sollte inhaber=\"Anna\" und kontostand=0 haben.'\nassert Konto('Ben', 50).kontostand == 50, 'Konto(\"Ben\", 50) sollte kontostand 50 haben.'"
+   ],
+   [
+    "Einzahlen und Abheben",
+    "k = Konto('Anna')\nk.einzahlen(100)\nassert k.kontostand == 100, f'Nach einzahlen(100) ist der Stand {k.kontostand!r}.'\nk.abheben(30)\nassert k.kontostand == 70, f'Nach abheben(30) ist der Stand {k.kontostand!r}.'"
+   ],
+   [
+    "Ungültige Beträge lösen ValueError aus",
+    "k = Konto('Anna', 70)\nfor aktion, betrag in ((k.abheben, 1000), (k.einzahlen, -5), (k.einzahlen, 0)):\n    try:\n        aktion(betrag)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(f'{aktion.__name__}({betrag}) sollte einen ValueError auslösen.')\nassert k.kontostand == 70, 'Bei einem Fehler darf sich der Kontostand nicht ändern.'"
+   ],
+   [
+    "Ausgabe mit __str__",
+    "k = Konto('Anna', 70)\nassert str(k) == 'Konto von Anna: 70 €', f'str(konto) ergibt {str(k)!r}, erwartet »Konto von Anna: 70 €«.'"
+   ],
+   [
+    "Konten sind unabhängig",
+    "a, b = Konto('A'), Konto('B')\na.einzahlen(10)\nassert b.kontostand == 0, 'Jedes Konto braucht einen eigenen Kontostand (self.kontostand).'"
+   ]
+  ],
+  "tipps": [
+   "class Konto: und darin def __init__(self, inhaber, kontostand=0): self.inhaber = inhaber …",
+   "In abheben zuerst prüfen: if betrag > self.kontostand: raise ValueError(\"Nicht gedeckt\")",
+   "def __str__(self): return f\"Konto von {self.inhaber}: {self.kontostand} €\""
+  ],
+  "loesung": "class Konto:\n    def __init__(self, inhaber, kontostand=0):\n        self.inhaber = inhaber\n        self.kontostand = kontostand\n\n    def einzahlen(self, betrag):\n        if betrag <= 0:\n            raise ValueError(\"Betrag muss positiv sein\")\n        self.kontostand += betrag\n\n    def abheben(self, betrag):\n        if betrag > self.kontostand:\n            raise ValueError(\"Nicht genug Guthaben\")\n        self.kontostand -= betrag\n\n    def __str__(self):\n        return f\"Konto von {self.inhaber}: {self.kontostand} €\"\n\n\nkonto = Konto(\"Anna\")\nkonto.einzahlen(100)\nkonto.abheben(30)\nprint(konto)\n",
+  "id": 15,
+  "stdin": "",
+  "modulname": "__main__",
+  "datei": "lektion_15.py"
+ },
+ {
+  "titel": "Abschlussprojekt: Zahlenraten",
+  "konzepte": [
+   "alles kombinieren",
+   "if __name__ == \"__main__\"",
+   "Programmstruktur"
+  ],
+  "erklaerung": "Zeit, alles zu kombinieren! Größere Programme bestehen aus **Funktionen** plus einem kleinen Startblock:\n\n```python\ndef main():\n    ...\n\nif __name__ == \"__main__\":\n    main()\n```\n\n`__name__` ist `\"__main__\"`, wenn die Datei **direkt gestartet** wird. Wird sie dagegen von einer anderen Datei importiert (oder vom Trainer geprüft), läuft der Startblock **nicht** – so lassen sich Funktionen einzeln testen.\n\nFür das Spiel brauchst du: `random.randint`, `input`/`int`, eine `while`-Schleife, `if`/`elif`/`else`, einen Zähler und `return`.",
+  "aufgabe": "Programmiere ein **Zahlenratespiel**:\n\n1. `bewerte(geheim, tipp)` gibt `\"zu klein\"`, `\"zu groß\"` oder `\"richtig\"` zurück.\n2. `spiele(geheim)` fragt so lange mit `input()` nach Tipps, bis die Zahl erraten ist. Nach jedem Tipp gibt sie die Bewertung aus, am Ende `Geschafft in <n> Versuchen!` – und **gibt die Anzahl der Versuche zurück**.\n3. Ein Startblock `if __name__ == \"__main__\":` ruft `spiele()` mit einer Zufallszahl von 1 bis 100 auf.\n\nZum Ausprobieren: Trag unter **⌨ Eingaben** mehrere Tipps ein – oder rufe zum Testen vorübergehend `spiele(42)` auf.",
+  "starter": "# Lektion 16 – Abschlussprojekt: Zahlenraten\nimport random\n\n",
+  "modulname": "spiel",
+  "tests": [
+   [
+    "`bewerte` liefert die richtige Bewertung",
+    "assert bewerte(50, 30) == 'zu klein', f'bewerte(50, 30) ergibt {bewerte(50, 30)!r}'\nassert bewerte(50, 70) == 'zu groß', f'bewerte(50, 70) ergibt {bewerte(50, 70)!r}'\nassert bewerte(50, 50) == 'richtig', f'bewerte(50, 50) ergibt {bewerte(50, 50)!r}'"
+   ],
+   [
+    "`spiele` zählt die Versuche",
+    "versuche, aus = mit_eingabe('50\\n25\\n37\\n', spiele, 37)\nassert versuche == 3, f'Mit den Tipps 50, 25, 37 sollte spiele(37) 3 zurückgeben, nicht {versuche!r}.'\nassert 'Geschafft in 3 Versuchen!' in aus, f'Am Ende sollte »Geschafft in 3 Versuchen!« erscheinen. Ausgabe:\\n{aus}'"
+   ],
+   [
+    "`spiele` gibt Rückmeldungen",
+    "versuche, aus = mit_eingabe('50\\n25\\n37\\n', spiele, 37)\nassert 'zu groß' in aus and 'zu klein' in aus, f'Nach jedem Tipp sollte die Bewertung ausgegeben werden. Ausgabe:\\n{aus}'"
+   ],
+   [
+    "Zufallszahl und Startblock",
+    "assert 'random' in QUELLTEXT and 'randint' in QUELLTEXT, 'Nutze random.randint(1, 100) für die geheime Zahl.'\nassert '__name__' in QUELLTEXT and '__main__' in QUELLTEXT, 'Füge den Startblock if __name__ == \"__main__\": hinzu.'"
+   ]
+  ],
+  "tipps": [
+   "bewerte ist ein if/elif/else mit drei return-Anweisungen.",
+   "In spiele: versuche = 0, dann while True: tipp = int(input(\"Dein Tipp: \")), versuche += 1, ergebnis = bewerte(geheim, tipp), print(ergebnis)",
+   "Wenn ergebnis == \"richtig\": Erfolg ausgeben und return versuche. Ganz unten: if __name__ == \"__main__\": spiele(random.randint(1, 100))"
+  ],
+  "loesung": "import random\n\n\ndef bewerte(geheim, tipp):\n    if tipp < geheim:\n        return \"zu klein\"\n    elif tipp > geheim:\n        return \"zu groß\"\n    else:\n        return \"richtig\"\n\n\ndef spiele(geheim):\n    versuche = 0\n    while True:\n        tipp = int(input(\"Dein Tipp: \"))\n        versuche += 1\n        ergebnis = bewerte(geheim, tipp)\n        print(ergebnis)\n        if ergebnis == \"richtig\":\n            print(f\"Geschafft in {versuche} Versuchen!\")\n            return versuche\n\n\nif __name__ == \"__main__\":\n    print(\"Ich denke mir eine Zahl zwischen 1 und 100.\")\n    spiele(random.randint(1, 100))\n",
+  "id": 16,
+  "stdin": "",
+  "datei": "lektion_16.py"
+ }
+]
