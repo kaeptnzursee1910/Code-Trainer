@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code-Trainer · Python lernen</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1l7 7-7 7-7-7z' fill='%23d97757'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">◆</span> code-trainer <span class="dim">· python</span></div>
+
+    <button id="lektionKnopf" class="lesson-btn" title="Lektionen (Alt+L)">
+      <span id="lektionTitel">Lektion …</span><span class="dim"> ▾</span>
+    </button>
+
+    <div class="progress" title="Fortschritt">
+      <div class="bar"><div id="fortschrittBalken"></div></div>
+      <span id="fortschrittText" class="dim">0/16</span>
+    </div>
+
+    <div class="spacer"></div>
+
+    <label class="model" title="Lokales Modell">
+      <span id="modellPunkt" class="dot"></span>
+      <select id="modellWahl"><option>Modell wird gesucht …</option></select>
+    </label>
+  </header>
+
+  <main id="layout">
+    <!-- links: Editor -->
+    <section id="editorPane" class="pane">
+      <div class="pane-head">
+        <span class="tab"><span class="tab-icon">py</span><span id="dateiname">lektion_01.py</span><span id="ungespeichert" class="dim" hidden>●</span></span>
+        <div class="actions">
+          <button id="knopfReset" title="Startcode wiederherstellen">↺ Reset</button>
+          <button id="knopfAusfuehren" title="Programm ausführen (Strg+Enter)">▶ Ausführen <kbd>Strg ↵</kbd></button>
+          <button id="knopfPruefen" class="primary" title="Aufgabe prüfen (Strg+Shift+Enter)">✓ Prüfen <kbd>Strg ⇧ ↵</kbd></button>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <div class="code-wrap">
+          <pre id="highlight" aria-hidden="true"><code></code></pre>
+          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Python-Code"></textarea>
+        </div>
+      </div>
+      <div class="statusline">
+        <span id="cursorPos">Z 1, S 1</span>
+        <span class="dim">Python 3 · UTF-8 · Tab = 4 Leerzeichen</span>
+      </div>
+    </section>
+
+    <div class="splitter vertical" id="splitV" title="Ziehen zum Anpassen"></div>
+
+    <section id="right">
+      <!-- rechts oben: Agent -->
+      <section id="agentPane" class="pane">
+        <div class="pane-head">
+          <span class="title"><span class="accent">◆</span> Agent</span>
+          <span id="agentStatus" class="dim"></span>
+          <div class="actions"><button id="knopfStopp" hidden title="Antwort abbrechen (Esc)">■ Stopp</button></div>
+        </div>
+        <div id="log" class="log" aria-live="polite"></div>
+        <div class="prompt-area">
+          <div id="befehlMenue" class="cmd-menu" hidden></div>
+          <div class="prompt-box">
+            <span class="caret">&gt;</span>
+            <textarea id="eingabe" rows="1" placeholder="Frag den Agenten … oder tippe / für Befehle" aria-label="Nachricht an den Agenten"></textarea>
+          </div>
+          <div class="prompt-hint"><span>/ für Befehle · /hilfe</span><span>↵ senden · ⇧↵ neue Zeile · Esc abbrechen</span></div>
+        </div>
+      </section>
+
+      <div class="splitter horizontal" id="splitH" title="Ziehen zum Anpassen"></div>
+
+      <!-- rechts unten: Ausgabe -->
+      <section id="outputPane" class="pane">
+        <div class="pane-head">
+          <span class="title">Ausgabe</span>
+          <span id="laufInfo" class="dim"></span>
+          <div class="actions">
+            <button id="knopfStdin" title="Eingaben für input()">⌨ Eingaben</button>
+            <button id="knopfLeeren" title="Ausgabe leeren">Leeren</button>
+          </div>
+        </div>
+        <div id="stdinBox" class="stdin-box" hidden>
+          <label for="stdin">Eingaben für <code>input()</code> – eine pro Zeile, in der Reihenfolge der Fragen</label>
+          <textarea id="stdin" rows="3" spellcheck="false"></textarea>
+        </div>
+        <pre id="ausgabe" class="output"><span class="dim">Hier erscheint die Ausgabe deines Programms. ▶ Ausführen mit Strg+Enter.</span></pre>
+      </section>
+    </section>
+  </main>
+
+  <div id="lektionMenue" class="lesson-menu" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>
