@@ -7,6 +7,13 @@ import { fehlerText, kiHinweisZuFehler } from "./fehler.js";
 
 const WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
 const ZEITLIMIT_MS = 10_000;
+
+// iPad/iPhone: Safari gibt einem Tab nur einen Teil des Arbeitsspeichers. Auf einem iPad Air M1
+// (8 GB) laufen Modelle bis ca. 2 GB zuverlässig, größere werden oft vom System beendet.
+// iPadOS meldet sich als „Macintosh“, daher zusätzlich die Touch-Prüfung.
+const IST_TABLET = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+const TABLET_GRENZE_MB = 2200;
 const SPEICHER = "codetrainer.fortschritt";
 const MODELL_SCHLUESSEL = "codetrainer.modell";
 
@@ -115,7 +122,13 @@ export function erstelleBrowserBackend() {
         const m = alle.find((x) => x.model_id === `${name}-${q}-MLC`);
         if (m) {
           const gb = m.vram_required_MB ? ` · ~${(m.vram_required_MB / 1024).toFixed(1).replace(".", ",")} GB` : "";
-          gefunden.push({ id: m.model_id, label: `${name}${gb}${notiz ? " · " + notiz : ""}`, mb: m.vram_required_MB || 0 });
+          const zuGross = IST_TABLET && (m.vram_required_MB || 0) > TABLET_GRENZE_MB;
+          gefunden.push({
+            id: m.model_id,
+            label: `${name}${gb}${zuGross ? " · fürs iPad zu groß, kann abstürzen" : notiz ? " · " + notiz : ""}`,
+            mb: m.vram_required_MB || 0,
+            zuGross,
+          });
           break;
         }
       }
@@ -123,7 +136,8 @@ export function erstelleBrowserBackend() {
     if (!gefunden.length) { // Fallback: alles, was als ressourcenschonend markiert ist
       for (const m of alle.filter((x) => x.low_resource_required).slice(0, 8)) gefunden.push({ id: m.model_id, label: m.model_id, mb: m.vram_required_MB || 0 });
     }
-    liste = gefunden;
+    // Zu große Modelle ans Ende, damit sie nicht versehentlich empfohlen werden
+    liste = [...gefunden.filter((m) => !m.zuGross), ...gefunden.filter((m) => m.zuGross)];
   }
 
   // Beendet das Modell vollständig und gibt den Grafikspeicher frei.
