@@ -2,6 +2,7 @@
  * links: Editor · rechts oben: Agent · rechts unten: Ausgabe
  */
 import { baueNachrichten } from "./agent.js";
+import { fehlerText, kiHinweisZuFehler } from "./fehler.js";
 import { erstelleServerBackend } from "./backend-server.js";
 import { erstelleBrowserBackend } from "./backend-browser.js";
 
@@ -387,7 +388,7 @@ async function modellLaden(id) {
     text.innerHTML = `<span class="ok">Bereit.</span> Das Modell läuft jetzt komplett auf deinem Gerät – frag einfach los.`;
     balken.parentElement.remove();
   } catch (err) {
-    text.innerHTML = `<span class="err">${esc(err.message)}</span>`;
+    text.innerHTML = `<span class="err">${esc(fehlerText(err))}</span>`;
   } finally {
     clearInterval(statusTimer);
     B.beiLadefortschritt = null;
@@ -446,7 +447,14 @@ async function agentFragen(modus, extras = {}) {
     if (err.name === "AbortError" || ctrl.signal.aborted) {
       body.innerHTML = (text ? md(text) : "") + '<p class="dim">– abgebrochen –</p>';
     } else {
-      body.innerHTML = (text ? md(text) : "") + `<p class="err">Fehler: ${esc(err.message)}</p>`;
+      const meldung = fehlerText(err);
+      const hinweis = err?.hinweis || kiHinweisZuFehler(meldung);
+      console.error("[Code-Trainer] Agent:", err);
+      body.innerHTML = (text ? md(text) : "") +
+        `<p class="err">Fehler: ${esc(meldung)}</p>` +
+        (hinweis ? `<p class="dim">${esc(hinweis)}</p>` : "") +
+        `<button class="inline-btn zweit" data-nochmal>↻ Nochmal versuchen</button>`;
+      $("[data-nochmal]", body).addEventListener("click", (ev) => { ev.target.remove(); agentFragen(modus, extras); });
       statusLaden();
     }
   } finally {
@@ -637,8 +645,8 @@ async function ausfuehren() {
       t.fertig([`${n} Zeile${n === 1 ? "" : "n"} Ausgabe · ${r.dauer.toFixed(2)} s`]);
     }
   } catch (err) {
-    t.fertig([esc(err.message)], true);
-    ausgabe.innerHTML = `<span class="fehler">${esc(err.message)}</span>`;
+    t.fertig([esc(fehlerText(err))], true);
+    ausgabe.innerHTML = `<span class="fehler">${esc(fehlerText(err))}</span>`;
   } finally {
     beschaeftigt(false);
   }
@@ -655,7 +663,7 @@ async function pruefen() {
   try {
     r = await B.pruefen({ lektion: aktuelleLektion(), code: ta.value });
   } catch (err) {
-    t.fertig([esc(err.message)], true);
+    t.fertig([esc(fehlerText(err))], true);
     beschaeftigt(false);
     return;
   }
@@ -968,5 +976,5 @@ async function start() {
 }
 
 start().catch((err) => {
-  log.innerHTML = `<div class="msg system"><span class="bullet">⚠</span><div class="body err">Start fehlgeschlagen: ${esc(err.message)}<br>Lade die Seite neu – beim ersten Start braucht der Browser eine Internetverbindung.</div></div>`;
+  log.innerHTML = `<div class="msg system"><span class="bullet">⚠</span><div class="body err">Start fehlgeschlagen: ${esc(fehlerText(err))}<br>Lade die Seite neu – beim ersten Start braucht der Browser eine Internetverbindung.</div></div>`;
 });

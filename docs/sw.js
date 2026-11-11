@@ -1,7 +1,7 @@
 // Service Worker: macht die Browser-Version nach dem ersten Laden offline nutzbar.
 // Eigene Dateien: erst Netz (für Updates), dann Cache. Bibliotheken vom CDN: Cache zuerst.
 // Die KI-Modelle speichert WebLLM selbst im Browser-Cache.
-const CACHE = "codetrainer-v1";
+const CACHE = "codetrainer-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));

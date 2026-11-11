@@ -3,6 +3,8 @@
 //   * das Sprachmodell läuft mit WebLLM über WebGPU (llm-worker.js)
 //   * Fortschritt und Code liegen im localStorage des Browsers
 
+import { fehlerText, kiHinweisZuFehler } from "./fehler.js";
+
 const WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
 const ZEITLIMIT_MS = 10_000;
 const SPEICHER = "codetrainer.fortschritt";
@@ -99,7 +101,7 @@ export function erstelleBrowserBackend() {
       if (!adapter) return { ok: false, grund: "WebGPU ist vorhanden, aber es wurde keine passende Grafikeinheit gefunden." };
       return { ok: true, f16: adapter.features.has("shader-f16") };
     } catch (err) {
-      return { ok: false, grund: "WebGPU-Fehler: " + err.message };
+      return { ok: false, grund: "WebGPU-Fehler: " + fehlerText(err) };
     }
   }
 
@@ -148,7 +150,7 @@ export function erstelleBrowserBackend() {
             await backend.modellWaehlen(gewaehlt);
           }
         } catch (err) {
-          ladeFehler = "WebLLM konnte nicht geladen werden: " + err.message;
+          ladeFehler = "WebLLM konnte nicht geladen werden: " + fehlerText(err);
           melden();
         }
       })();
@@ -219,8 +221,11 @@ export function erstelleBrowserBackend() {
         // Bitte den Browser, die großen Modelldaten nicht automatisch zu löschen
         navigator.storage?.persist?.().catch(() => {});
       } catch (err) {
-        ladeFehler = "Modell konnte nicht geladen werden: " + (err.message || err) +
-          " – evtl. reicht der Speicher nicht. Probiere ein kleineres Modell.";
+        const text = fehlerText(err);
+        console.error("[Code-Trainer] Modell laden:", err);
+        ladeFehler = "Modell konnte nicht geladen werden: " + text + " – " +
+          (kiHinweisZuFehler(text) || "Evtl. reicht der Speicher nicht. Probiere ein kleineres Modell.");
+        engine = null; // sauber neu anfangen
         geladenesModell = "";
         throw new Error(ladeFehler);
       } finally {
@@ -244,6 +249,19 @@ export function erstelleBrowserBackend() {
           if (t) yield t;
         }
         if (signal?.aborted) throw new DOMException("abgebrochen", "AbortError");
+      } catch (err) {
+        if (signal?.aborted || err?.name === "AbortError") throw new DOMException("abgebrochen", "AbortError");
+        console.error("[Code-Trainer] Chat-Fehler:", err);
+        const text = fehlerText(err);
+        // Nach schweren Fehlern (Grafikkarte verloren, Modell entladen) ist die Engine unbrauchbar
+        if (/lost|disposed|not loaded|no model|reload|destroyed|OOM|out of memory/i.test(text)) {
+          geladenesModell = "";
+          engine = null;
+          melden();
+        }
+        const fehler = new Error(text);
+        fehler.hinweis = kiHinweisZuFehler(text);
+        throw fehler;
       } finally {
         signal?.removeEventListener("abort", stopp);
       }
