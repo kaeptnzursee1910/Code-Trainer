@@ -89,7 +89,7 @@ export function erstelleBrowserBackend() {
   }
 
   /* ------------------------------------------------------------ Sprachmodell */
-  let webllm = null, engine = null, geladenesModell = "";
+  let webllm = null, engine = null, llmWorker = null, geladenesModell = "";
   let liste = [], gpu = null, laedt = false, ladeFehler = "";
   let gewaehlt = "";
   try { gewaehlt = localStorage.getItem(MODELL_SCHLUESSEL) || ""; } catch {}
@@ -124,6 +124,19 @@ export function erstelleBrowserBackend() {
       for (const m of alle.filter((x) => x.low_resource_required).slice(0, 8)) gefunden.push({ id: m.model_id, label: m.model_id, mb: m.vram_required_MB || 0 });
     }
     liste = gefunden;
+  }
+
+  // Beendet das Modell vollständig und gibt den Grafikspeicher frei.
+  // Wichtig auf dem iPad: Ohne terminate() blieben alte Kopien im Speicher.
+  async function entsorgen() {
+    const e = engine, w = llmWorker;
+    engine = null;
+    llmWorker = null;
+    geladenesModell = "";
+    if (e) {
+      try { await Promise.race([e.unload(), new Promise((r) => setTimeout(r, 3000))]); } catch { /* war schon kaputt */ }
+    }
+    try { w?.terminate(); } catch {}
   }
 
   async function imCache(id) {
@@ -182,6 +195,8 @@ export function erstelleBrowserBackend() {
     },
 
     /* Modell */
+    letztesModell() { return gewaehlt; },
+
     async status() {
       if (!gpu) return { online: false, modelle: [], modell: "", fehler: "", laedt: false };
       const geladen = !!engine && !laedt && geladenesModell;
@@ -206,16 +221,10 @@ export function erstelleBrowserBackend() {
       melden();
       const fortschritt = (bericht) => backend.beiLadefortschritt?.(bericht);
       try {
-        if (engine) {
-          engine.setInitProgressCallback?.(fortschritt);
-          await engine.reload(id);
-        } else {
-          engine = await webllm.CreateWebWorkerMLCEngine(
-            new Worker(new URL("llm-worker.js", import.meta.url), { type: "module" }),
-            id,
-            { initProgressCallback: fortschritt },
-          );
-        }
+        // Immer frisch starten: reload() auf einer beschädigten Engine scheitert oft
+        await entsorgen();
+        llmWorker = new Worker(new URL("llm-worker.js", import.meta.url), { type: "module" });
+        engine = await webllm.CreateWebWorkerMLCEngine(llmWorker, id, { initProgressCallback: fortschritt });
         geladenesModell = id;
         try { localStorage.setItem(MODELL_SCHLUESSEL, id); } catch {}
         // Bitte den Browser, die großen Modelldaten nicht automatisch zu löschen
@@ -225,8 +234,7 @@ export function erstelleBrowserBackend() {
         console.error("[Code-Trainer] Modell laden:", err);
         ladeFehler = "Modell konnte nicht geladen werden: " + text + " – " +
           (kiHinweisZuFehler(text) || "Evtl. reicht der Speicher nicht. Probiere ein kleineres Modell.");
-        engine = null; // sauber neu anfangen
-        geladenesModell = "";
+        await entsorgen(); // sauber neu anfangen
         throw new Error(ladeFehler);
       } finally {
         laedt = false;
@@ -236,7 +244,11 @@ export function erstelleBrowserBackend() {
     },
 
     async *chat(nachrichten, signal) {
-      if (!engine || !geladenesModell) throw new Error("Es ist kein Modell geladen.");
+      if (!engine || !geladenesModell) {
+        const fehler = new Error("Es ist kein Modell geladen.");
+        fehler.wiederherstellbar = !!gewaehlt; // zuletzt benutztes Modell kann neu gestartet werden
+        throw fehler;
+      }
       const stopp = () => { try { engine.interruptGenerate(); } catch {} };
       signal?.addEventListener("abort", stopp);
       try {
@@ -253,14 +265,15 @@ export function erstelleBrowserBackend() {
         if (signal?.aborted || err?.name === "AbortError") throw new DOMException("abgebrochen", "AbortError");
         console.error("[Code-Trainer] Chat-Fehler:", err);
         const text = fehlerText(err);
-        // Nach schweren Fehlern (Grafikkarte verloren, Modell entladen) ist die Engine unbrauchbar
-        if (/lost|disposed|not loaded|no model|reload|destroyed|OOM|out of memory/i.test(text)) {
-          geladenesModell = "";
-          engine = null;
-          melden();
-        }
         const fehler = new Error(text);
         fehler.hinweis = kiHinweisZuFehler(text);
+        // Nach schweren Fehlern (Grafikeinheit verloren, Modell abgeräumt) ist die Engine unbrauchbar.
+        // Auf dem iPad passiert das z. B., wenn die App im Hintergrund war oder der Speicher knapp wurde.
+        if (/lost|disposed|not loaded|no model|reload|destroyed|OOM|out of memory/i.test(text)) {
+          fehler.wiederherstellbar = true;
+          await entsorgen();
+          melden();
+        }
         throw fehler;
       } finally {
         signal?.removeEventListener("abort", stopp);

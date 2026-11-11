@@ -27,6 +27,8 @@ export function fehlerText(err, tiefe = 0) {
 
 // Hinweise zu typischen Problemen mit Sprachmodellen im Browser
 export function kiHinweisZuFehler(text) {
+  if (/disposed|destroyed/i.test(text))
+    return "Das Modell wurde vom Gerät beendet – z. B. weil die App kurz im Hintergrund war oder der Speicher knapp wurde. „Nochmal versuchen“ startet es neu.";
   if (/device.*lost|GPUDevice|lost the device|out of memory|OOM|allocation|buffer.*size|maxStorageBuffer|exceeds.*limit/i.test(text))
     return "Der Grafikspeicher des Geräts reicht für dieses Modell vermutlich nicht. Wähle oben rechts ein kleineres Modell (z. B. Llama-3.2-1B oder Qwen2.5-0.5B) und schließe andere Tabs/Apps.";
   if (/context.*(window|length|size)|ContextWindow|too long|prompt.*exceed/i.test(text))

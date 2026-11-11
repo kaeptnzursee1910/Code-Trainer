@@ -433,6 +433,7 @@ async function agentFragen(modus, extras = {}) {
     text: extras.text || "", pruefung: extras.pruefung || null, tippNr: extras.tipp_nr || 1, kompakt: B.kompakt,
   });
 
+  let neustart = false;
   try {
     for await (const stueck of B.chat(nachrichten, ctrl.signal)) {
       text += stueck;
@@ -446,6 +447,9 @@ async function agentFragen(modus, extras = {}) {
     el.hidden = false;
     if (err.name === "AbortError" || ctrl.signal.aborted) {
       body.innerHTML = (text ? md(text) : "") + '<p class="dim">– abgebrochen –</p>';
+    } else if (err?.wiederherstellbar && !extras._wiederholt && B.name === "browser" && B.letztesModell()) {
+      neustart = true; // Modell wurde vom Gerät beendet → unten automatisch neu starten
+      el.remove();
     } else {
       const meldung = fehlerText(err);
       const hinweis = err?.hinweis || kiHinweisZuFehler(meldung);
@@ -454,13 +458,19 @@ async function agentFragen(modus, extras = {}) {
         `<p class="err">Fehler: ${esc(meldung)}</p>` +
         (hinweis ? `<p class="dim">${esc(hinweis)}</p>` : "") +
         `<button class="inline-btn zweit" data-nochmal>↻ Nochmal versuchen</button>`;
-      $("[data-nochmal]", body).addEventListener("click", (ev) => { ev.target.remove(); agentFragen(modus, extras); });
+      $("[data-nochmal]", body).addEventListener("click", (ev) => { ev.target.remove(); agentFragen(modus, { ...extras, _wiederholt: false }); });
       statusLaden();
     }
   } finally {
     sp.entfernen();
     if (S.abbruch === ctrl) { S.abbruch = null; stoppKnopf(false); }
     nachUnten();
+  }
+  if (neustart) {
+    logSystem("Das KI-Modell wurde vom Gerät beendet – auf dem iPad passiert das z. B., wenn die App kurz im Hintergrund war " +
+      "oder der Speicher knapp wurde. Ich starte es neu (aus dem Speicher, ohne neuen Download) und stelle deine Frage noch einmal.", "↻");
+    await modellLaden(B.letztesModell());
+    if (S.status.online) return agentFragen(modus, { ...extras, _wiederholt: true });
   }
 }
 
@@ -500,7 +510,8 @@ function kiHinweis() {
     return;
   }
   if (st.laedt) { logSystem("Das KI-Modell wird gerade geladen – einen Moment noch.", "⬇"); return; }
-  const e = st.empfohlen;
+  // Zuletzt benutztes Modell bevorzugen (startet aus dem Speicher), sonst die Empfehlung
+  const e = st.modelle.find((m) => m.id === B.letztesModell?.()) || st.empfohlen;
   const el = logSystem(
     "<b>KI-Tutor einschalten?</b>" +
     md("\nDas Sprachmodell läuft **komplett auf deinem Gerät** – nichts verlässt den Browser. Beim ersten Mal wird es einmalig heruntergeladen" +
